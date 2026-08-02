@@ -1,0 +1,91 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags: []
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - Boards
+  - Boards_ofs
+  - Hud
+  - Hud_ofs
+  - Fade_dialogs
+  - Fade_dialogs_ofs
+  - Blur_dialogs
+  - Blur_dialogs_ofs
+  - Dialogs
+  - Dialogs_ofs
+  - Fade_game_helper
+  - Blur_game_helper
+  - Game_helper
+  - Fade_global
+  - Blur_global
+  - Frame
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Boards
+    uniqueID: 1168199825
+    locked: 0
+  - name: Boards_ofs
+    uniqueID: 1138472469
+    locked: 0
+  - name: Hud
+    uniqueID: 683410751
+    locked: 0
+  - name: Hud_ofs
+    uniqueID: 3080259711
+    locked: 0
+  - name: Fade_dialogs
+    uniqueID: 4251238801
+    locked: 0
+  - name: Fade_dialogs_ofs
+    uniqueID: 1279744983
+    locked: 0
+  - name: Blur_dialogs
+    uniqueID: 2002378545
+    locked: 0
+  - name: Blur_dialogs_ofs
+    uniqueID: 742413071
+    locked: 0
+  - name: Dialogs
+    uniqueID: 1997940809
+    locked: 0
+  - name: Dialogs_ofs
+    uniqueID: 1475433209
+    locked: 0
+  - name: Fade_game_helper
+    uniqueID: 2418415741
+    locked: 0
+  - name: Blur_game_helper
+    uniqueID: 4270276127
+    locked: 0
+  - name: Game_helper
+    uniqueID: 1393483131
+    locked: 0
+  - name: Fade_global
+    uniqueID: 1148959173
+    locked: 0
+  - name: Blur_global
+    uniqueID: 3274852089
+    locked: 0
+  - name: Frame
+    uniqueID: 1404583151
+    locked: 0
