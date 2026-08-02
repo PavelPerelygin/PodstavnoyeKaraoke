@@ -14,9 +14,6 @@ namespace Dialogs.EditMicrophone
         [SerializeField] private Button _closeButton;
         [SerializeField] private Dropdown _dropdown;
         [SerializeField] private Slider _sensitivityMicrophoneSlider;
-        [SerializeField] private InputField _ballWeightInputField;
-        [SerializeField] private InputField _liftingForceInputField;
-        [SerializeField] private MoveBallController _moveBallController;
         
         private AudioClip _audioClip;
         
@@ -25,9 +22,6 @@ namespace Dialogs.EditMicrophone
             InitButton();
             InitDropdown();
             InitSlider();
-            InitInputFields();
-            
-            _moveBallController.Play();
         }
 
         private void InitButton()
@@ -73,29 +67,6 @@ namespace Dialogs.EditMicrophone
         {
             _sensitivityMicrophoneSlider.onValueChanged.AddListener(SliderPress);
             _sensitivityMicrophoneSlider.value = MainController.Instance.LocalSettings.GetSensitivityMicrophone();
-        }
-
-        private void InitInputFields()
-        {
-            _ballWeightInputField.text = MainController.Instance.LocalSettings.GetBallWeight().ToString();
-            _ballWeightInputField.onValueChanged.AddListener((string v) =>
-            {
-                if (int.TryParse(v, out int weight))
-                {
-                    MainController.Instance.LocalSettings.SetBallWeight(weight);
-                }
-            });
-            _ballWeightInputField.DisableOverDownColors();
-            
-            _liftingForceInputField.text = MainController.Instance.LocalSettings.GetLiftingForce().ToString();
-            _liftingForceInputField.onValueChanged.AddListener((string v) =>
-            {
-                if (int.TryParse(v, out int force))
-                {
-                    MainController.Instance.LocalSettings.SetLiftingForce(force);
-                }
-            });
-            _liftingForceInputField.DisableOverDownColors();
         }
 
         private void OnMicrophoneSelected(int index)

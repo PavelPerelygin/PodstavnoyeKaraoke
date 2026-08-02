@@ -7,11 +7,6 @@ namespace Dialogs.Base
         Update = 2,
         GameChanges = 3,
         EditMicrophone = 4,
-        ListLevels = 5,
-        ListSkins = 6,
-        Attention = 8,
-        Delay = 9,
-        Await = 10,
-        Info = 11,
+        Warning = 5,
     }
 }

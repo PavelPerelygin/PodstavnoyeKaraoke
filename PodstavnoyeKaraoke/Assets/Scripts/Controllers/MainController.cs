@@ -5,9 +5,7 @@ using Bars;
 using Blurs;
 using Boards.Base;
 using Controllers.GameChanges;
-using Controllers.Levels;
 using Controllers.License;
-using Controllers.Skins;
 using Controllers.Update;
 using Fades;
 using Layers;
@@ -43,8 +41,6 @@ namespace Controllers
         public HelperController HelperController { get; private set; }
         public ScreensController ScreensController { get; private set; }
         public MicrophoneController MicrophoneController => _microphoneController;
-        public LevelsController LevelsController { get; private set; }
-        public SkinsController SkinsController { get; private set; }
 
         public NumberStyles NumberStyle { get; private set; } = NumberStyles.Number;
         public CultureInfo CultureInfo { get; private set; } = CultureInfo.CreateSpecificCulture("en-GB");
@@ -75,8 +71,6 @@ namespace Controllers
             HelperController = new HelperController();
             ScreensController = new ScreensController();
             MicrophoneController.Init();
-            LevelsController = new LevelsController();
-            SkinsController = new SkinsController();
 
             CheckNeedRunInBackground();
         }

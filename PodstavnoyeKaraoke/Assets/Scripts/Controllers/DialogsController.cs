@@ -49,44 +49,6 @@ namespace Controllers
             return dialog;
         }
         
-        #region Open / close dialog
-
-        public void OpenAwaitProgressDialog(string text, Action<AwaitDialog> showComplete = null)
-        {
-            CloseAwaitDialog();
-            
-            var dialogAwait = CreateDialog(TypeDialog.Await) as AwaitDialog;
-            if (dialogAwait != null)
-            {
-                dialogAwait.InitProgress();
-                dialogAwait.OnShowComplete.Add(() => { showComplete?.Invoke(dialogAwait);});
-                dialogAwait.Show();
-            }
-        }
-        
-        public void OpenAwaitDialog(string header, Action showComplete = null)
-        {
-            CloseAwaitDialog();
-            
-            var dialogAwait = CreateDialog(TypeDialog.Await) as AwaitDialog;
-            if (dialogAwait != null)
-            {
-                dialogAwait.InitHeader();
-                dialogAwait.SetHeader(header);
-                dialogAwait.OnShowComplete.Add(showComplete);
-                dialogAwait.Show();
-            }
-        }
-        
-        public void CloseAwaitDialog()
-        {
-            var dialog = SearchDialogByType(TypeDialog.Await);
-            if(dialog != null)
-                dialog.Hide();
-        }
-
-        #endregion
-        
         public int GetMaxDialogOrder()
         {
             var maxOrder = 0;

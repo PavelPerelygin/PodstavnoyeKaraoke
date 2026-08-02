@@ -128,7 +128,7 @@ namespace Controllers
                 return true;
 
             var dialog =
-                MainController.Instance.DialogsController.CreateDialog(TypeDialog.Attention) as AttentionDialog;
+                MainController.Instance.DialogsController.CreateDialog(TypeDialog.Warning) as WarningDialog;
             if (dialog != null)
             {
                 dialog.Init(MainController.Instance.TextManager.GetText(544));
