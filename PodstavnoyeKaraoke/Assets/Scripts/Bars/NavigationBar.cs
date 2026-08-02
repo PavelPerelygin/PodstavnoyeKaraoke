@@ -2,7 +2,6 @@
 using Boards.Base;
 using Controllers;
 using Extensions;
-using Game.Pages;
 using UnityEngine;
 using UnityEngine.UI;
 using Utilities;
