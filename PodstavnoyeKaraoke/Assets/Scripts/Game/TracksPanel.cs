@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Boards;
 using Controllers;
 using Extensions;
@@ -16,11 +17,18 @@ namespace Game
         [SerializeField] private Button _editTrackButton;
         [SerializeField] private Button _removeTrackButton;
         [SerializeField] private TrackItem _trackItemPrefab;
+        [SerializeField] private Sprite _selectedTrackSubstrate;
+        [SerializeField] private Sprite _unSelectedTrackSubstrate;
+        
         
         private List<TrackItem> _trackItems = new List<TrackItem>();
         
+        public Sprite SelectedTrackSubstrate => _selectedTrackSubstrate;
+        public Sprite UnSelectedTrackSubstrate => _unSelectedTrackSubstrate;
         public MainBoard MainBoard {get; private set;}
         public TrackItem SelectedTrack {get; private set;}
+
+        public event Action OnChangeSelectedTrack;
 
         public void Init(MainBoard mainBoard)
         {
@@ -61,6 +69,29 @@ namespace Game
             _trackItems.Add(item);
         }
 
+        public void OnClickTrackItem(TrackItem trackItem)
+        {
+            if(SelectedTrack == trackItem)
+                return;
+            
+            SetSelectedTrackItem(trackItem);
+        }
+
+        private void SetSelectedTrackItem(TrackItem trackItem)
+        {
+            SelectedTrack = trackItem;
+            
+            for (int i = 0; i < _trackItems.Count; i++)
+            {
+                var item = _trackItems[i];
+                
+                if(item == SelectedTrack)
+                    item.SelectTrack();
+                else
+                    item.UnSelectTrack();
+            }
+        }
+
         private void AddTrack()
         {
             MainController.Instance.LocalSettings.AddTrack(trackData =>
@@ -89,6 +120,8 @@ namespace Game
                 _trackItems.Remove(SelectedTrack);
             
             Destroy(SelectedTrack.gameObject);
+            
+            SetSelectedTrackItem(null);
         }
 
         protected override bool GameObjectClickHandler(GameObject selectedObj)

@@ -1478,7 +1478,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: 22.13
+  m_Spacing: 5
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
@@ -2881,6 +2881,10 @@ MonoBehaviour:
   _editTrackButton: {fileID: 163446007}
   _removeTrackButton: {fileID: 163061587}
   _trackItemPrefab: {fileID: 9218777294370339635, guid: b35eef6b7b3f6ee45a25592b4148e03c,
+    type: 3}
+  _selectedTrackSubstrate: {fileID: 21300000, guid: 5c91cf65bbb9c164d86eaa99b66351cc,
+    type: 3}
+  _unSelectedTrackSubstrate: {fileID: 21300000, guid: 1aae71d06e3d6014faf4cec00e019350,
     type: 3}
 --- !u!1 &1875001992
 GameObject:

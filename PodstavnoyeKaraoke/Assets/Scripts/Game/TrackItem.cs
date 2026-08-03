@@ -20,6 +20,7 @@ namespace Game
         public void Init(TrackData trackData, TracksPanel tracksPanel)
         {
             TrackData = trackData;
+            _tracksPanel =  tracksPanel;
 
             UpdateName();
             
@@ -41,7 +42,17 @@ namespace Game
 
         private void OnClick()
         {
-            
+            _tracksPanel.OnClickTrackItem(this);
+        }
+
+        public void SelectTrack()
+        {
+            _substarteImage.sprite = _tracksPanel.SelectedTrackSubstrate;
+        }
+
+        public void UnSelectTrack()
+        {
+            _substarteImage.sprite = _tracksPanel.UnSelectedTrackSubstrate;
         }
 
         protected override bool GameObjectClickHandler(GameObject selectedObj)
@@ -51,7 +62,7 @@ namespace Game
 
             if (selectedObj == _button.gameObject)
             {
-                
+                OnClick();
             }
             
             return true;
