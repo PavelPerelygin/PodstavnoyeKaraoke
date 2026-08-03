@@ -1,5 +1,6 @@
 ﻿using System;
 using Controllers;
+using Utilities.Files;
 
 namespace Managers.Settings.Local
 {
@@ -9,11 +10,15 @@ namespace Managers.Settings.Local
         public string nameTrack = "";
         public string pathTrack = "";
         
+        public event Action OnChangeName;
+        
         public void SetNameTrack(string value)
         {
             nameTrack = value;
             
             MainController.Instance.LocalSettings.Save();
+            
+            OnChangeName?.Invoke();
         }
 
         public string GetNameTrack()
@@ -31,6 +36,14 @@ namespace Managers.Settings.Local
         public string GetPathTrack()
         {
             return pathTrack;
+        }
+
+        public bool IsExist()
+        {
+            if(string.IsNullOrEmpty(pathTrack))
+                return false;
+            
+            return File.FileExistFromStreamingAssets(pathTrack);
         }
     }
 }

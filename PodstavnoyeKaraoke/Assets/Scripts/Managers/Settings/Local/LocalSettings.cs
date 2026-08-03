@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using Controllers;
 using UnityEngine;
 using Utilities;
 using Utilities.Files;
@@ -12,6 +14,7 @@ namespace Managers.Settings.Local
         
         public string microphoneName = "";
         public float sensitivityMicrophone = 1;
+        public List<TrackData> tracks = new List<TrackData>();
         
         public event Action OnChangeMicrophoneName;
         
@@ -50,9 +53,50 @@ namespace Managers.Settings.Local
 
         #region Tracks
 
-        public void AddTrack()
+        public void AddTrack(Action<TrackData> onComplete)
         {
+            File.OpenFile(TypeContent.Sound,MainController.Instance.TextManager.GetText(538), path =>
+            {
+                if (string.IsNullOrEmpty(path))
+                {
+                    onComplete?.Invoke(null);
+                    return;
+                }
+                
+                var localPath = File.CopyMusicFileToStreamingAssets(path);
+
+                var data = new  TrackData();
+                data.SetNameTrack(File.GetNameFile(path));
+                data.SetPathTrack(localPath);
+                
+                tracks.Add(data);
+                Save();
+                
+                onComplete?.Invoke(data);
+            });
+        }
+
+        public void RemoveTrack(TrackData trackData)
+        {
+            if(!tracks.Contains(trackData))
+                return;
             
+            tracks.Remove(trackData);
+            Save();
+        }
+
+        public List<TrackData> GetTracks()
+        {
+            var result =  new List<TrackData>();
+
+            for (int i = 0; i < tracks.Count; i++)
+            {
+                var trackData = tracks[i];
+                if(trackData.IsExist())
+                    result.Add(trackData);
+            }
+            
+            return result;
         }
 
         #endregion

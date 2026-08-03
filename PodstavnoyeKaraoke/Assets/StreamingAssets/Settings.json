@@ -1,19 +1,10 @@
 {
-    "mainScreenBackground": {
-        "sourcePath": "Content/476459cd-24c5-4f62-aa73-76278462da80.mp4",
-        "extension": ".mp4"
-    },
-    "selectScreenBackground": {
-        "sourcePath": "Content/ec54a6d7-d051-405f-be9d-fbfadd700133.png",
-        "extension": ".png"
-    },
-    "gameScreenBackground": {
-        "sourcePath": "Content/3ef4c522-3c4d-467b-8f8f-09d12d654b13.mp4",
-        "extension": ".mp4"
-    },
     "microphoneName": "",
     "sensitivityMicrophone": 1.0,
-    "ballWeight": 900,
-    "liftingForce": 50,
-    "skinName": "По умолчанию"
+    "tracks": [
+        {
+            "nameTrack": "Бонд_с_кнопкой_-_Кухни - ответ",
+            "pathTrack": "Content/7a100468-7fc6-44ed-9187-274e77c9a446.wav"
+        }
+    ]
 }

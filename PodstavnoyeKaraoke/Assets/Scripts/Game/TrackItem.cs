@@ -1,4 +1,5 @@
-﻿using Extensions;
+﻿using System;
+using Extensions;
 using Managers.Settings.Local;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,32 +9,37 @@ namespace Game
 {
     public class TrackItem : Interactable
     {
+        [SerializeField] private Button _button;
+        [SerializeField] private Image _substarteImage;
         [SerializeField] private Text _nameTrackText;
-        [SerializeField] private Button _removeButton;
         
+        private TracksPanel _tracksPanel;
         
-        private TrackData _trackData;
+        public TrackData TrackData {get; private set;}
 
-        public void Init(TrackData trackData)
+        public void Init(TrackData trackData, TracksPanel tracksPanel)
         {
-            _trackData = trackData;
+            TrackData = trackData;
 
-            InitText();
+            UpdateName();
+            
             InitButton();
+
+            TrackData.OnChangeName += OnChangeName;
         }
 
-        private void InitText()
+        private void UpdateName()
         {
-            _nameTrackText.text = _trackData.GetNameTrack();
+            _nameTrackText.text = TrackData.GetNameTrack();
         }
 
         private void InitButton()
         {
-            _removeButton.onClick.AddListener(ButtonPress);
-            _removeButton.DisableOverDownColors();
+            _button.onClick.AddListener(ButtonPress);
+            _button.DisableOverDownColors();
         }
 
-        private void RemoveTrack()
+        private void OnClick()
         {
             
         }
@@ -43,12 +49,26 @@ namespace Game
             if(!base.GameObjectClickHandler(selectedObj))
                 return false;
 
-            if (selectedObj == _removeButton.gameObject)
+            if (selectedObj == _button.gameObject)
             {
                 
             }
             
             return true;
         }
+
+        #region Events
+
+        private void OnChangeName()
+        {
+            UpdateName();
+        }
+
+        private void OnDestroy()
+        {
+            TrackData.OnChangeName -= OnChangeName;
+        }
+
+        #endregion
     }
 }
