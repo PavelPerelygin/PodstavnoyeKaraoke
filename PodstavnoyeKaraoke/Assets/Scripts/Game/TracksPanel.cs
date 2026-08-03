@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Boards;
 using Controllers;
+using Dialogs;
+using Dialogs.Base;
 using Extensions;
 using Managers.Settings.Local;
 using UnityEngine;
@@ -107,6 +109,14 @@ namespace Game
         {
             if(SelectedTrack == null)
                 return;
+
+            var dialog =
+                MainController.Instance.DialogsController.CreateDialog(TypeDialog.EditTrack) as EditTrackDialog;
+            if (dialog != null)
+            {
+                dialog.Init(SelectedTrack.TrackData);
+                dialog.Show();
+            }
         }
         
         private void RemoveTrack()

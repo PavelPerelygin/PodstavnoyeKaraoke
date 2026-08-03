@@ -9,5 +9,6 @@ namespace Dialogs.Base
         EditMicrophone = 4,
         Warning = 5,
         Confirmation = 6,
+        EditTrack = 7,
     }
 }

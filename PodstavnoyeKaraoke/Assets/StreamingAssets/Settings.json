@@ -3,8 +3,12 @@
     "sensitivityMicrophone": 1.0,
     "tracks": [
         {
-            "nameTrack": "Бонд_с_кнопкой_-_Кухни - ответ",
+            "nameTrack": "1234",
             "pathTrack": "Content/7a100468-7fc6-44ed-9187-274e77c9a446.wav"
+        },
+        {
+            "nameTrack": "рюмка водки ответ",
+            "pathTrack": "Content/0ddd6cf1-0ffc-46fd-88f8-0d162f0f28d8.wav"
         }
     ]
 }
