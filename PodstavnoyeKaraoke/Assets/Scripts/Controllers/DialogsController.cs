@@ -280,5 +280,19 @@ namespace Controllers
             Dialog dialog = SearchDialogByType(type);
             dialog.OnUpdate();
         }
+
+        #region Open dialogs
+
+        public void OpenConfirmDialog(string text, Action onConfirm, Action onReject, float delay = 0f)
+        {
+            var dialog = CreateDialog(TypeDialog.Confirmation) as ConfirmationDialog;
+            if (dialog != null)
+            {
+                dialog.Init(text, onConfirm, onReject);
+                dialog.Show(delay);
+            }
+        }
+
+        #endregion
     }
 }

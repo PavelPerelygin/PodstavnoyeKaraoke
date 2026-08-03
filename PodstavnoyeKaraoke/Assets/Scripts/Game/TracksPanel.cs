@@ -113,15 +113,20 @@ namespace Game
         {
             if(SelectedTrack == null)
                 return;
+
+            var text = $"{MainController.Instance.TextManager.GetText(1005)} \"{SelectedTrack.TrackData.GetNameTrack()}\"";
             
-            MainController.Instance.LocalSettings.RemoveTrack(SelectedTrack.TrackData);
+            MainController.Instance.DialogsController.OpenConfirmDialog(text, () =>
+            {
+                MainController.Instance.LocalSettings.RemoveTrack(SelectedTrack.TrackData);
             
-            if(_trackItems.Contains(SelectedTrack))
-                _trackItems.Remove(SelectedTrack);
+                if(_trackItems.Contains(SelectedTrack))
+                    _trackItems.Remove(SelectedTrack);
             
-            Destroy(SelectedTrack.gameObject);
+                Destroy(SelectedTrack.gameObject);
             
-            SetSelectedTrackItem(null);
+                SetSelectedTrackItem(null); 
+            },null);
         }
 
         protected override bool GameObjectClickHandler(GameObject selectedObj)

@@ -8,5 +8,6 @@ namespace Dialogs.Base
         GameChanges = 3,
         EditMicrophone = 4,
         Warning = 5,
+        Confirmation = 6,
     }
 }
