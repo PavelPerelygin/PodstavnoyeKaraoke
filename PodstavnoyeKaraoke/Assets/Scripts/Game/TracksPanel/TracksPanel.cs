@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Utilities;
 
-namespace Game
+namespace Game.TracksPanel
 {
     public class TracksPanel : Interactable
     {

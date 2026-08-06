@@ -3,6 +3,8 @@ using Controllers;
 using Dialogs.Base;
 using Game;
 using Game.Common.Content;
+using Game.PlayersPanel;
+using Game.TracksPanel;
 using UnityEngine;
 
 namespace Boards
@@ -10,6 +12,8 @@ namespace Boards
     public class MainBoard : Board
     {
         [SerializeField] private TracksPanel _tracksPanel;
+        [SerializeField] private PlayersPanel _playersPanel;
+        
         
         protected override void OnEnableBoard()
         {
@@ -39,6 +43,7 @@ namespace Boards
             base.Init();
             
             _tracksPanel.Init(this);
+            _playersPanel.Init(this);
         }
 
         protected override void Show(bool smoothly, float delay)

@@ -1,11 +1,10 @@
-﻿using System;
-using Extensions;
+﻿using Extensions;
 using Managers.Settings.Local;
 using UnityEngine;
 using UnityEngine.UI;
 using Utilities;
 
-namespace Game
+namespace Game.TracksPanel
 {
     public class TrackItem : Interactable
     {

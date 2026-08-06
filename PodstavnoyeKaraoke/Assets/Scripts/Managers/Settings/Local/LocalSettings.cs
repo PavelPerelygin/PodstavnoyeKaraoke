@@ -15,6 +15,7 @@ namespace Managers.Settings.Local
         public string microphoneName = "";
         public float sensitivityMicrophone = 1;
         public List<TrackData> tracks = new List<TrackData>();
+        public List<PlayerData> players = new List<PlayerData>();
         
         public event Action OnChangeMicrophoneName;
         
@@ -97,6 +98,35 @@ namespace Managers.Settings.Local
             }
             
             return result;
+        }
+
+        #endregion
+
+        #region Players
+
+        public List<PlayerData> GetPlayers()
+        {
+            return players;
+        }
+
+        public PlayerData CreatePlayer()
+        {
+            var playerData = new PlayerData();
+            playerData.SetNamePlayer(MainController.Instance.TextManager.GetText(1008));
+            
+            players.Add(playerData);
+            Save();
+            
+            return playerData;
+        }
+        
+        public void RemovePlayer(PlayerData playerData)
+        {
+            if(!players.Contains(playerData))
+                return;
+            
+            players.Remove(playerData);
+            Save();
         }
 
         #endregion

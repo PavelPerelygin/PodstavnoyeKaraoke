@@ -10,5 +10,16 @@
             "nameTrack": "рюмка водки ответ",
             "pathTrack": "Content/0ddd6cf1-0ffc-46fd-88f8-0d162f0f28d8.wav"
         }
+    ],
+    "players": [
+        {
+            "namePlayer": "Игрок"
+        },
+        {
+            "namePlayer": "Игрок"
+        },
+        {
+            "namePlayer": "Игрок"
+        }
     ]
 }
