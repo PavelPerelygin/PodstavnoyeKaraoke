@@ -92,6 +92,8 @@ namespace Game.TracksPanel
                 else
                     item.UnSelectTrack();
             }
+
+            OnChangeSelectedTrack?.Invoke();
         }
 
         private void AddTrack()

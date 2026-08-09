@@ -158,7 +158,9 @@ namespace Managers.Audio
                 return this;
             }
 
-            AudioSource = _audioManager.GetFreeAudioSource();
+            if (AudioSource == null || AudioSource.clip != AudioClip)
+                AudioSource = _audioManager.GetFreeAudioSource();
+
             AudioSource.outputAudioMixerGroup = _audioManager.GetAudioMixerGroup(TypeGroup);
             
             AudioClip.name = File.GetNameFile(Path);
@@ -194,9 +196,6 @@ namespace Managers.Audio
 
             _wasPlay = false;
             
-            if(!AudioSource.isPlaying)
-                return this;
-
             if (FadeOutTime > 0)
                 SmoothChangeVolume(0,FadeOutTime,StopAudioSource);
             else

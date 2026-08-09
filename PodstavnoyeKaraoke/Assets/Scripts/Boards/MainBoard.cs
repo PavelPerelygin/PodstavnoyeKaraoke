@@ -64,6 +64,14 @@ namespace Boards
             _playerPanel.Init(this);
             _playerPanel.Hide();
             _settingsPanel.Init(this);
+
+            _tracksPanel.OnChangeSelectedTrack += OnChangeSelectedTrack;
+            OnChangeSelectedTrack();
+        }
+
+        private void OnChangeSelectedTrack()
+        {
+            _playerPanel.SetCurrentTrack(_tracksPanel.SelectedTrack?.TrackData);
         }
 
         protected override void Show(bool smoothly, float delay)

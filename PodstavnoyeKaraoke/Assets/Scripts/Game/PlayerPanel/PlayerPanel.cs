@@ -1,6 +1,7 @@
 ﻿using Boards;
 using Controllers;
 using Extensions;
+using Managers.Audio;
 using Managers.Settings.Local;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,6 +26,10 @@ namespace Game.PlayerPanel
         
         private MainBoard _mainBoard;
         private PlayerData _playerData;
+        private TrackData _currentTrackData;
+        private AudioInfo _currentTrackAudioInfo;
+        private bool _isUpdatingTrackSlider;
+        private float _currentTrackProgress;
 
         public void Init(MainBoard mainBoard)
         {
@@ -32,6 +37,8 @@ namespace Game.PlayerPanel
             
             InitButtons();
             InitInputField();
+            InitCurrentTrackSlider();
+            ResetCurrentTrackView();
         }
 
         private void InitButtons()
@@ -64,9 +71,137 @@ namespace Game.PlayerPanel
             _namePlayerInputField.DisableOverDownColors();
         }
 
+        private void InitCurrentTrackSlider()
+        {
+            _currentTrackSlider.minValue = 0f;
+            _currentTrackSlider.maxValue = 1f;
+            _currentTrackSlider.onValueChanged.AddListener(OnCurrentTrackSliderValueChanged);
+        }
+
         private void SetCurrentTrackName(string trackName)
         {
             _currentTrackName.text = $"{MainController.Instance.TextManager.GetText(1020)}{trackName}";
+        }
+
+        public void SetCurrentTrack(TrackData trackData)
+        {
+            if (_currentTrackData == trackData)
+                return;
+
+            StopCurrentTrack();
+
+            if (_currentTrackData != null)
+                _currentTrackData.OnChangeName -= OnCurrentTrackNameChanged;
+
+            _currentTrackData = trackData;
+
+            if (_currentTrackData != null)
+                _currentTrackData.OnChangeName += OnCurrentTrackNameChanged;
+
+            if (_currentTrackData != null && _currentTrackData.IsExist())
+                EnsureCurrentTrackAudioInfo();
+
+            UpdateCurrentTrackName();
+            ResetCurrentTrackProgress();
+        }
+
+        private void PlayCurrentTrack()
+        {
+            if (_currentTrackData == null || !_currentTrackData.IsExist())
+                return;
+
+            EnsureCurrentTrackAudioInfo();
+
+            if (_currentTrackAudioInfo == null)
+                return;
+
+            _currentTrackAudioInfo.Play(false);
+            _currentTrackAudioInfo.SetProgress(_currentTrackProgress);
+            UpdatePlayTimeText();
+        }
+
+        private void PauseCurrentTrack()
+        {
+            if (_currentTrackAudioInfo == null)
+                return;
+
+            _currentTrackAudioInfo.Pause();
+            UpdatePlayTimeText();
+        }
+
+        private void StopCurrentTrack()
+        {
+            if (_currentTrackAudioInfo != null)
+            {
+                _currentTrackAudioInfo.Stop();
+                _currentTrackAudioInfo.Remove();
+                _currentTrackAudioInfo = null;
+            }
+
+            ResetCurrentTrackProgress();
+        }
+
+        private void EnsureCurrentTrackAudioInfo()
+        {
+            if (_currentTrackAudioInfo != null &&
+                MainController.Instance.AudioManager.CheckContainsAudioInfo(_currentTrackAudioInfo))
+                return;
+
+            _currentTrackAudioInfo = MainController.Instance.AudioManager
+                .Create(_currentTrackData.GetPathTrack(), TypeGroup.Track, true)
+                .OnChangeProgress(OnCurrentTrackProgressChanged)
+                .OnCompleted(OnCurrentTrackCompleted);
+        }
+
+        private void ResetCurrentTrackView()
+        {
+            UpdateCurrentTrackName();
+            ResetCurrentTrackProgress();
+        }
+
+        private void ResetCurrentTrackProgress()
+        {
+            _currentTrackProgress = 0f;
+            SetCurrentTrackSliderValue(0f);
+            UpdatePlayTimeText();
+        }
+
+        private void UpdateCurrentTrackName()
+        {
+            SetCurrentTrackName(_currentTrackData == null ? "" : _currentTrackData.GetNameTrack());
+        }
+
+        private void UpdatePlayTimeText()
+        {
+            float duration = GetCurrentTrackDuration();
+            float currentTime = duration * _currentTrackProgress;
+            _playTimeText.text = $"{FormatTrackTime(currentTime)}/{FormatTrackTime(duration)}";
+        }
+
+        private float GetCurrentTrackDuration()
+        {
+            if (_currentTrackAudioInfo == null || _currentTrackAudioInfo.AudioClip == null)
+                return 0f;
+
+            return _currentTrackAudioInfo.GetAudioClipLenght();
+        }
+
+        private string FormatTrackTime(float time)
+        {
+            time = Mathf.Max(0f, time);
+
+            int minutes = Mathf.FloorToInt(time / 60f);
+            int seconds = Mathf.FloorToInt(time % 60f);
+            int milliseconds = Mathf.FloorToInt((time - Mathf.Floor(time)) * 100f);
+
+            return $"{minutes:00}:{seconds:00}:{milliseconds:00}";
+        }
+
+        private void SetCurrentTrackSliderValue(float value)
+        {
+            _isUpdatingTrackSlider = true;
+            _currentTrackSlider.value = value;
+            _isUpdatingTrackSlider = false;
         }
 
         private void OpenPlayersPanel()
@@ -103,8 +238,61 @@ namespace Game.PlayerPanel
             {
                 OpenPlayersPanel();
             }
+            else if (selectedObj == _playButton.gameObject)
+            {
+                PlayCurrentTrack();
+            }
+            else if (selectedObj == _pauseButton.gameObject)
+            {
+                PauseCurrentTrack();
+            }
+            else if (selectedObj == _stopButtonButton.gameObject)
+            {
+                StopCurrentTrack();
+            }
             
             return true;
         }
+
+        #region Events
+
+        private void OnCurrentTrackSliderValueChanged(float value)
+        {
+            if (_isUpdatingTrackSlider)
+                return;
+
+            _currentTrackProgress = value;
+
+            if (_currentTrackAudioInfo != null)
+                _currentTrackAudioInfo.SetProgress(value);
+
+            UpdatePlayTimeText();
+        }
+
+        private void OnCurrentTrackProgressChanged(float progress)
+        {
+            _currentTrackProgress = progress;
+            SetCurrentTrackSliderValue(progress);
+            UpdatePlayTimeText();
+        }
+
+        private void OnCurrentTrackCompleted()
+        {
+            _currentTrackAudioInfo = null;
+            ResetCurrentTrackProgress();
+        }
+
+        private void OnCurrentTrackNameChanged()
+        {
+            UpdateCurrentTrackName();
+        }
+
+        private void OnDestroy()
+        {
+            if (_currentTrackData != null)
+                _currentTrackData.OnChangeName -= OnCurrentTrackNameChanged;
+        }
+
+        #endregion
     }
 }
