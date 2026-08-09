@@ -45,6 +45,16 @@ namespace Managers.Settings.Local
             return recordData;
         }
 
+        public void RemoveRecord(RecordData recordData)
+        {
+            if (!records.Contains(recordData))
+                return;
+
+            recordData.OnRemove();
+            records.Remove(recordData);
+            MainController.Instance.LocalSettings.Save();
+        }
+
         #endregion
 
         #region Events

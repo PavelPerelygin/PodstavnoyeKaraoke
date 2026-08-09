@@ -60,6 +60,7 @@ namespace Game.PlayerPanel.RecordsPanel
             }
 
             EnsurePlayingRecordAudioInfo(recordItem.RecordData);
+            recordItem.SetDuration(GetPlayingRecordDuration());
             _playingRecordAudioInfo?.Play(false);
         }
 
@@ -79,8 +80,31 @@ namespace Game.PlayerPanel.RecordsPanel
             StopPlayingRecord();
         }
 
+        public void RemoveRecord(RecordItem recordItem)
+        {
+            if (recordItem == null || recordItem.RecordData == null)
+                return;
+
+            if (_playingRecordItem == recordItem)
+                StopPlayingRecord();
+
+            _playerPanel.RemoveRecord(recordItem.RecordData);
+            _recordItems.Remove(recordItem);
+            Destroy(recordItem.gameObject);
+        }
+
+        public void SetRecordProgress(RecordItem recordItem, float value)
+        {
+            if (_playingRecordItem != recordItem || _playingRecordAudioInfo == null)
+                return;
+
+            _playingRecordAudioInfo.SetProgress(value);
+        }
+
         public void StopPlayingRecord()
         {
+            var recordItem = _playingRecordItem;
+
             if (_playingRecordAudioInfo != null)
             {
                 _playingRecordAudioInfo.Stop();
@@ -89,6 +113,7 @@ namespace Game.PlayerPanel.RecordsPanel
             }
 
             _playingRecordItem = null;
+            recordItem?.ResetProgress();
         }
 
         private void EnsurePlayingRecordAudioInfo(RecordData recordData)
@@ -99,11 +124,26 @@ namespace Game.PlayerPanel.RecordsPanel
 
             _playingRecordAudioInfo = MainController.Instance.AudioManager
                 .Create(recordData.GetPatchToRecord(), TypeGroup.Track, true)
+                .OnChangeProgress(OnPlayingRecordProgressChanged)
                 .OnCompleted(OnPlayingRecordCompleted);
+        }
+
+        private float GetPlayingRecordDuration()
+        {
+            if (_playingRecordAudioInfo == null || _playingRecordAudioInfo.AudioClip == null)
+                return 0f;
+
+            return _playingRecordAudioInfo.GetAudioClipLenght();
+        }
+
+        private void OnPlayingRecordProgressChanged(float progress)
+        {
+            _playingRecordItem?.SetProgress(progress);
         }
 
         private void OnPlayingRecordCompleted()
         {
+            _playingRecordItem?.ResetProgress();
             _playingRecordAudioInfo = null;
             _playingRecordItem = null;
         }

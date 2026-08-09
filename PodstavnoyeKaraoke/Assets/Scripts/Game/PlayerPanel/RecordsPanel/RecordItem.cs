@@ -1,8 +1,10 @@
-﻿using Extensions;
+using Controllers;
+using Extensions;
 using Managers.Settings.Local;
 using UnityEngine;
 using UnityEngine.UI;
 using Utilities;
+using Utilities.Files;
 
 namespace Game.PlayerPanel.RecordsPanel
 {
@@ -16,36 +18,100 @@ namespace Game.PlayerPanel.RecordsPanel
         [SerializeField] private Button _dowlandButton;
         [SerializeField] private Slider _slider;
         [SerializeField] private Text _playTimeText;
-        
+
         private RecordsPanel _recordsPanel;
+        private bool _isUpdatingSlider;
+        private float _duration;
+        private float _progress;
 
         public RecordData RecordData {get; private set;}
-        
-        public void Init (RecordData recordData, RecordsPanel recordsPanel)
+
+        public void Init(RecordData recordData, RecordsPanel recordsPanel)
         {
             RecordData = recordData;
             _recordsPanel = recordsPanel;
             _nameRecordText.text = RecordData.GetRecordName();
 
             InitButtons();
+            InitSlider();
+            ResetProgress();
         }
 
         private void InitButtons()
         {
             _playButton.onClick.AddListener(ButtonPress);
             _playButton.DisableOverDownColors();
-            
+
             _stopButton.onClick.AddListener(ButtonPress);
             _stopButton.DisableOverDownColors();
-            
+
             _pauseButton.onClick.AddListener(ButtonPress);
             _pauseButton.DisableOverDownColors();
-            
+
             _removeButton.onClick.AddListener(ButtonPress);
             _removeButton.DisableOverDownColors();
-            
+
             _dowlandButton.onClick.AddListener(ButtonPress);
             _dowlandButton.DisableOverDownColors();
+        }
+
+        private void InitSlider()
+        {
+            _slider.minValue = 0f;
+            _slider.maxValue = 1f;
+            _slider.onValueChanged.AddListener(OnSliderValueChanged);
+        }
+
+        public void SetDuration(float duration)
+        {
+            _duration = Mathf.Max(0f, duration);
+            UpdatePlayTimeText();
+        }
+
+        public void SetProgress(float progress)
+        {
+            _progress = progress;
+            SetSliderValue(progress);
+            UpdatePlayTimeText();
+        }
+
+        public void ResetProgress()
+        {
+            _progress = 0f;
+            SetSliderValue(0f);
+            UpdatePlayTimeText();
+        }
+
+        private void DowlandRecord()
+        {
+            if (RecordData == null || !RecordData.IsExistRecord())
+                return;
+
+            File.SaveFile(TypeContent.Sound, MainController.Instance.TextManager.GetText(538), RecordData.GetPatchToRecord());
+        }
+
+        private void SetSliderValue(float value)
+        {
+            _isUpdatingSlider = true;
+            _slider.value = value;
+            _isUpdatingSlider = false;
+        }
+
+        private void UpdatePlayTimeText()
+        {
+            float currentTime = _duration * _progress;
+            _playTimeText.text = $"{FormatTime(currentTime)}/{FormatTime(_duration)}";
+        }
+
+        private string FormatTime(float time)
+        {
+            time = Mathf.Max(0f, time);
+
+            int minutes = Mathf.FloorToInt(time / 60f);
+            int seconds = Mathf.FloorToInt(time % 60f);
+            int milliseconds = Mathf.FloorToInt((time - Mathf.Floor(time)) * 100f);
+
+            return $"{minutes:00}:{seconds:00}:{milliseconds:00}";
         }
 
         protected override bool GameObjectClickHandler(GameObject selectedObj)
@@ -65,8 +131,26 @@ namespace Game.PlayerPanel.RecordsPanel
             {
                 _recordsPanel.StopRecord(this);
             }
-            
+            else if (selectedObj == _removeButton.gameObject)
+            {
+                _recordsPanel.RemoveRecord(this);
+            }
+            else if (selectedObj == _dowlandButton.gameObject)
+            {
+                DowlandRecord();
+            }
+
             return true;
+        }
+
+        private void OnSliderValueChanged(float value)
+        {
+            if (_isUpdatingSlider)
+                return;
+
+            _progress = value;
+            _recordsPanel.SetRecordProgress(this, value);
+            UpdatePlayTimeText();
         }
     }
 }

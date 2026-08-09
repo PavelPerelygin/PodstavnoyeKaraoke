@@ -154,6 +154,14 @@ namespace Game.PlayerPanel
             ResetCurrentTrackProgress();
         }
 
+        public void RemoveRecord(RecordData recordData)
+        {
+            if (_playerData == null || recordData == null)
+                return;
+
+            _playerData.RemoveRecord(recordData);
+        }
+
         private void EnsureCurrentTrackAudioInfo()
         {
             if (_currentTrackAudioInfo != null &&
