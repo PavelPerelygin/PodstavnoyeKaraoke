@@ -304,7 +304,7 @@ namespace Controllers
                     return FallbackFrequency;
 
                 var frequency = maxFrequency > 0 ? maxFrequency : minFrequency;
-                LogError($"Default microphone frequencies are not supported. Selected frequency: {frequency}. Device caps: min={minFrequency}, max={maxFrequency}.");
+                Log($"Default microphone frequencies are not supported. Using device frequency: {frequency}. Device caps: min={minFrequency}, max={maxFrequency}.");
                 return frequency;
             }
             catch (Exception exception)

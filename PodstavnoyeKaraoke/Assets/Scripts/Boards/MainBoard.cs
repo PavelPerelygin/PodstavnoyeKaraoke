@@ -3,9 +3,11 @@ using Controllers;
 using Dialogs.Base;
 using Game;
 using Game.Common.Content;
+using Game.PlayerPanel;
 using Game.PlayersPanel;
 using Game.SettingsPanel;
 using Game.TracksPanel;
+using Managers.Settings.Local;
 using UnityEngine;
 
 namespace Boards
@@ -14,6 +16,7 @@ namespace Boards
     {
         [SerializeField] private TracksPanel _tracksPanel;
         [SerializeField] private PlayersPanel _playersPanel;
+        [SerializeField] private PlayerPanel _playerPanel;
         [SerializeField] private SettingsPanel _settingsPanel;
         
         protected override void OnEnableBoard()
@@ -39,12 +42,27 @@ namespace Boards
             dialog.Show();
         }
 
+        public void OpenPlayersPanel()
+        {
+            _playerPanel.Hide();
+            _playersPanel.Show();
+        }
+
+        public void OpenPlayerPanel(PlayerData playerData)
+        {
+            _playersPanel.Hide();
+            _playerPanel.Show(playerData);
+        }
+
         public override void Init()
         {
             base.Init();
             
             _tracksPanel.Init(this);
             _playersPanel.Init(this);
+            _playersPanel.Show();
+            _playerPanel.Init(this);
+            _playerPanel.Hide();
             _settingsPanel.Init(this);
         }
 

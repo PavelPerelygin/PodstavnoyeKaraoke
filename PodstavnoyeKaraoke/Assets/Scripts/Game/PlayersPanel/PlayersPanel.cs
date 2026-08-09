@@ -11,6 +11,7 @@ namespace Game.PlayersPanel
 {
     public class PlayersPanel : Interactable
     {
+        [SerializeField] private RectTransform _root;
         [SerializeField] private ScrollRect _scrollRect;
         [SerializeField] private Button _addPlayerButton;
         [SerializeField] private PlayerItem _playerItemPrefab;
@@ -72,7 +73,7 @@ namespace Game.PlayersPanel
         
         public void OpenEditPlayerPanel(PlayerData playerData)
         {
-
+            _mainBoard.OpenPlayerPanel(playerData);
         }
 
         private void AddPlayer()
@@ -82,6 +83,20 @@ namespace Game.PlayersPanel
             
             _scrollRect.verticalNormalizedPosition = 0;
         }
+
+        #region Show / hide
+
+        public void Show()
+        {
+            _root.gameObject.SetActive(true);
+        }
+
+        public void Hide()
+        {
+            _root.gameObject.SetActive(false);
+        }
+
+        #endregion
 
         protected override bool GameObjectClickHandler(GameObject selectedObj)
         {
