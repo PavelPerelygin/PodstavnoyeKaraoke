@@ -14,6 +14,7 @@ namespace Managers.Settings.Local
         
         public string microphoneName = "";
         public float sensitivityMicrophone = 1;
+        public bool autoRecord;
         public List<TrackData> tracks = new List<TrackData>();
         public List<PlayerData> players = new List<PlayerData>();
         
@@ -130,6 +131,18 @@ namespace Managers.Settings.Local
         }
 
         #endregion
+
+        public bool GetAutoRecord()
+        {
+            return autoRecord;
+        }
+
+        public void SetAutoRecord(bool value)
+        {
+            autoRecord = value;
+            
+            Save();
+        }
 
         private static string GetPath()
         {

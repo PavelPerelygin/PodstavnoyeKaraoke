@@ -1,6 +1,7 @@
 {
-    "microphoneName": "",
+    "microphoneName": "Головной телефон (HONOR CHOICE Headphones Pro Hands-Free AG Audio)",
     "sensitivityMicrophone": 1.0,
+    "autoRecord": false,
     "tracks": [
         {
             "nameTrack": "1234",

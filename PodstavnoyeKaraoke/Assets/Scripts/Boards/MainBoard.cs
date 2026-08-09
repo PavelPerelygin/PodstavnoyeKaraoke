@@ -4,6 +4,7 @@ using Dialogs.Base;
 using Game;
 using Game.Common.Content;
 using Game.PlayersPanel;
+using Game.SettingsPanel;
 using Game.TracksPanel;
 using UnityEngine;
 
@@ -13,7 +14,7 @@ namespace Boards
     {
         [SerializeField] private TracksPanel _tracksPanel;
         [SerializeField] private PlayersPanel _playersPanel;
-        
+        [SerializeField] private SettingsPanel _settingsPanel;
         
         protected override void OnEnableBoard()
         {
@@ -44,6 +45,7 @@ namespace Boards
             
             _tracksPanel.Init(this);
             _playersPanel.Init(this);
+            _settingsPanel.Init(this);
         }
 
         protected override void Show(bool smoothly, float delay)
