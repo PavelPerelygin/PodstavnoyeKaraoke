@@ -12,7 +12,10 @@ namespace Game.PlayerPanel.RecordsPanel
         [SerializeField] private Button _playButton;
         [SerializeField] private Button _stopButton;
         [SerializeField] private Button _pauseButton;
+        [SerializeField] private Button _removeButton;
         [SerializeField] private Button _dowlandButton;
+        [SerializeField] private Slider _slider;
+        [SerializeField] private Text _playTimeText;
         
         private RecordsPanel _recordsPanel;
 
@@ -37,6 +40,12 @@ namespace Game.PlayerPanel.RecordsPanel
             
             _pauseButton.onClick.AddListener(ButtonPress);
             _pauseButton.DisableOverDownColors();
+            
+            _removeButton.onClick.AddListener(ButtonPress);
+            _removeButton.DisableOverDownColors();
+            
+            _dowlandButton.onClick.AddListener(ButtonPress);
+            _dowlandButton.DisableOverDownColors();
         }
 
         protected override bool GameObjectClickHandler(GameObject selectedObj)
