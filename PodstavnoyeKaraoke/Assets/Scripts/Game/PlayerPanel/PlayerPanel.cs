@@ -1,4 +1,5 @@
 ﻿using Boards;
+using Controllers;
 using Extensions;
 using Managers.Settings.Local;
 using UnityEngine;
@@ -13,6 +14,13 @@ namespace Game.PlayerPanel
         [SerializeField] private Button _closeButton;
         [SerializeField] private InputField _namePlayerInputField;
         [SerializeField] private Button _removePlayerButton;
+        [SerializeField] private Text _currentTrackName;
+        [SerializeField] private Slider _currentTrackSlider;
+        [SerializeField] private Button _playButton;
+        [SerializeField] private Button _pauseButton;
+        [SerializeField] private Button _stopButtonButton;
+        [SerializeField] private Button _recordButtonButton;
+        [SerializeField] private Text _playTimeText;
         [SerializeField] private RecordsPanel.RecordsPanel _recordsPanel;
         
         private MainBoard _mainBoard;
@@ -30,6 +38,18 @@ namespace Game.PlayerPanel
         {
             _closeButton.onClick.AddListener(ButtonPress);
             _closeButton.DisableOverDownColors();
+            
+            _playButton.onClick.AddListener(ButtonPress);
+            _playButton.DisableOverDownColors();
+            
+            _pauseButton.onClick.AddListener(ButtonPress);
+            _pauseButton.DisableOverDownColors();
+            
+            _stopButtonButton.onClick.AddListener(ButtonPress);
+            _stopButtonButton.DisableOverDownColors();
+            
+            _recordButtonButton.onClick.AddListener(ButtonPress);
+            _recordButtonButton.DisableOverDownColors();
         }
 
         private void InitInputField()
@@ -42,6 +62,11 @@ namespace Game.PlayerPanel
                 _playerData.SetNamePlayer(value);
             });
             _namePlayerInputField.DisableOverDownColors();
+        }
+
+        private void SetCurrentTrackName(string trackName)
+        {
+            _currentTrackName.text = $"{MainController.Instance.TextManager.GetText(1020)}{trackName}";
         }
 
         private void OpenPlayersPanel()

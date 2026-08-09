@@ -1723,6 +1723,13 @@ MonoBehaviour:
   _closeButton: {fileID: 1709221943}
   _namePlayerInputField: {fileID: 1577594560}
   _removePlayerButton: {fileID: 1053257889}
+  _currentTrackName: {fileID: 1636889180}
+  _currentTrackSlider: {fileID: 634606041}
+  _playButton: {fileID: 1334640344}
+  _pauseButton: {fileID: 1231579717}
+  _stopButtonButton: {fileID: 351866266}
+  _recordButtonButton: {fileID: 1472259302}
+  _playTimeText: {fileID: 1229115372}
   _recordsPanel: {fileID: 1079560009}
 --- !u!1 &331196391
 GameObject:
@@ -3452,6 +3459,18 @@ RectTransform:
     type: 3}
   m_PrefabInstance: {fileID: 634606039}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &634606041 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8066722798572933750, guid: 3dc96add1628e304cadfa4666a2839fd,
+    type: 3}
+  m_PrefabInstance: {fileID: 634606039}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &641787387
 GameObject:
   m_ObjectHideFlags: 0
