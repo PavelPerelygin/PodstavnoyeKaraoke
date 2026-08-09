@@ -33,6 +33,18 @@ namespace Managers.Settings.Local
             return records;
         }
 
+        public RecordData AddRecord(string recordName, string patchToRecord)
+        {
+            var recordData = new RecordData();
+            recordData.SetRecordName(recordName);
+            recordData.SetPatchToRecord(patchToRecord);
+
+            records.Add(recordData);
+            MainController.Instance.LocalSettings.Save();
+
+            return recordData;
+        }
+
         #endregion
 
         #region Events

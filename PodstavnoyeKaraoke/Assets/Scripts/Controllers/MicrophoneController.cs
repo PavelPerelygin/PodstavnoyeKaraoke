@@ -2,6 +2,7 @@ using System;
 using Dialogs;
 using Dialogs.Base;
 using UnityEngine;
+using Utilities.Audio;
 using FileUtility = Utilities.Files.File;
 
 namespace Controllers
@@ -14,13 +15,16 @@ namespace Controllers
         private const float StuckPositionDelay = 2f;
         private const int DefaultFrequency = 44100;
         private const int FallbackFrequency = 48000;
+        private const int MaxRecordingLengthSeconds = 3599;
 
         private string _micName = "";
         private AudioClip _recordedClip;
+        private AudioClip _recordingClip;
         private int _sampleWindow = 128;
         private float _nextRestartMicrophoneTime;
         private float _lastPositionChangedTime;
         private int _lastMicrophonePosition = -1;
+        private bool _isRecording;
 
         public void Init()
         {
@@ -49,6 +53,9 @@ namespace Controllers
             try
             {
                 if (string.IsNullOrEmpty(_micName))
+                    return 0f;
+
+                if (_isRecording)
                     return 0f;
 
                 if (!Microphone.IsRecording(_micName))
@@ -163,8 +170,94 @@ namespace Controllers
 
         #endregion
 
+        #region Recording
+
+        public bool IsRecording()
+        {
+            return _isRecording;
+        }
+
+        public bool StartRecording()
+        {
+            if (_isRecording)
+                return true;
+
+            if (!CheckSelectionMicrophone())
+                return false;
+
+            var micName = MainController.Instance.LocalSettings.GetMicrophoneName();
+            if (string.IsNullOrEmpty(micName) || !CheckAvailableMicrophoneByName(micName))
+                return false;
+
+            DisableMicrophone();
+            _micName = micName;
+            _recordingClip = null;
+
+            try
+            {
+                var frequency = GetSupportedFrequency(_micName);
+                _recordingClip = Microphone.Start(_micName, false, MaxRecordingLengthSeconds, frequency);
+                _isRecording = _recordingClip != null;
+
+                if (!_isRecording)
+                    LogError($"Microphone.Start returned null recording clip. Selected: '{_micName}'.");
+
+                return _isRecording;
+            }
+            catch (Exception exception)
+            {
+                _recordingClip = null;
+                _isRecording = false;
+                LogError("Failed to start track recording.", exception);
+                EnableMicrophone();
+                return false;
+            }
+        }
+
+        public string StopRecordingToStreamingAssets()
+        {
+            if (!_isRecording)
+                return "";
+
+            var localPath = "";
+
+            try
+            {
+                int position = Microphone.GetPosition(_micName);
+                Microphone.End(_micName);
+
+                if (_recordingClip != null && position > 0)
+                {
+                    var samples = new float[position * _recordingClip.channels];
+                    _recordingClip.GetData(samples, 0);
+
+                    var clip = AudioClip.Create("Record", position, _recordingClip.channels, _recordingClip.frequency, false);
+                    clip.SetData(samples, 0);
+
+                    string unusedPath;
+                    var bytes = WavUtility.FromAudioClip(clip, out unusedPath, false);
+                    localPath = FileUtility.SaveBytesToStreamingAssets(bytes, ".wav");
+                }
+            }
+            catch (Exception exception)
+            {
+                LogError("Failed to stop and save track recording.", exception);
+            }
+
+            _recordingClip = null;
+            _isRecording = false;
+            EnableMicrophone();
+
+            return localPath;
+        }
+
+        #endregion
+
         private void EnableMicrophone()
         {
+            if (_isRecording)
+                return;
+
             DisableMicrophone();
 
             var micName = MainController.Instance.LocalSettings.GetMicrophoneName();

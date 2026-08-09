@@ -22,6 +22,7 @@ namespace Game.PlayerPanel
         [SerializeField] private Button _stopButtonButton;
         [SerializeField] private Button _recordButtonButton;
         [SerializeField] private Text _playTimeText;
+        [SerializeField] private Text _recordTimeText;
         [SerializeField] private RecordsPanel.RecordsPanel _recordsPanel;
         
         private MainBoard _mainBoard;
@@ -30,6 +31,8 @@ namespace Game.PlayerPanel
         private AudioInfo _currentTrackAudioInfo;
         private bool _isUpdatingTrackSlider;
         private float _currentTrackProgress;
+        private bool _isRecording;
+        private float _recordStartTime;
 
         public void Init(MainBoard mainBoard)
         {
@@ -38,7 +41,9 @@ namespace Game.PlayerPanel
             InitButtons();
             InitInputField();
             InitCurrentTrackSlider();
+            _recordsPanel.Init(this);
             ResetCurrentTrackView();
+            ResetRecordTimeText();
         }
 
         private void InitButtons()
@@ -110,6 +115,7 @@ namespace Game.PlayerPanel
             if (_currentTrackData == null || !_currentTrackData.IsExist())
                 return;
 
+            _recordsPanel.StopPlayingRecord();
             EnsureCurrentTrackAudioInfo();
 
             if (_currentTrackAudioInfo == null)
@@ -118,10 +124,15 @@ namespace Game.PlayerPanel
             _currentTrackAudioInfo.Play(false);
             _currentTrackAudioInfo.SetProgress(_currentTrackProgress);
             UpdatePlayTimeText();
+
+            if (MainController.Instance.LocalSettings.GetAutoRecord())
+                StartCurrentRecording();
         }
 
         private void PauseCurrentTrack()
         {
+            StopCurrentRecording();
+
             if (_currentTrackAudioInfo == null)
                 return;
 
@@ -129,8 +140,10 @@ namespace Game.PlayerPanel
             UpdatePlayTimeText();
         }
 
-        private void StopCurrentTrack()
+        public void StopCurrentTrack()
         {
+            StopCurrentRecording();
+
             if (_currentTrackAudioInfo != null)
             {
                 _currentTrackAudioInfo.Stop();
@@ -204,6 +217,77 @@ namespace Game.PlayerPanel
             _isUpdatingTrackSlider = false;
         }
 
+        private void StartCurrentRecording()
+        {
+            if (_isRecording)
+                return;
+
+            if (_playerData == null || _currentTrackData == null)
+                return;
+
+            if (!MainController.Instance.MicrophoneController.StartRecording())
+                return;
+
+            _isRecording = true;
+            _recordStartTime = Time.time;
+            UpdateRecordTimeText();
+        }
+
+        private void StopCurrentRecording()
+        {
+            if (!_isRecording)
+                return;
+
+            _isRecording = false;
+
+            var patchToRecord = MainController.Instance.MicrophoneController.StopRecordingToStreamingAssets();
+            if (!string.IsNullOrEmpty(patchToRecord) && _playerData != null && _currentTrackData != null)
+            {
+                var recordName = GetUniqueRecordName(_currentTrackData.GetNameTrack());
+                var recordData = _playerData.AddRecord(recordName, patchToRecord);
+                _recordsPanel.AddRecord(recordData);
+            }
+
+            ResetRecordTimeText();
+        }
+
+        private string GetUniqueRecordName(string baseName)
+        {
+            var result = baseName;
+            var index = 1;
+
+            while (CheckRecordNameExists(result))
+            {
+                result = $"{baseName} ({index})";
+                index++;
+            }
+
+            return result;
+        }
+
+        private bool CheckRecordNameExists(string recordName)
+        {
+            var records = _playerData.GetRecords();
+            for (int i = 0; i < records.Count; i++)
+            {
+                if (records[i].GetRecordName() == recordName)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private void UpdateRecordTimeText()
+        {
+            var recordTime = _isRecording ? Time.time - _recordStartTime : 0f;
+            _recordTimeText.text = $"{MainController.Instance.TextManager.GetText(1021)}{FormatTrackTime(recordTime)}";
+        }
+
+        private void ResetRecordTimeText()
+        {
+            _recordTimeText.text = $"{MainController.Instance.TextManager.GetText(1021)}{FormatTrackTime(0f)}";
+        }
+
         private void OpenPlayersPanel()
         {
             _mainBoard.OpenPlayersPanel();
@@ -224,6 +308,8 @@ namespace Game.PlayerPanel
         
         public void Hide()
         {
+            StopCurrentTrack();
+            _recordsPanel.StopPlayingRecord();
             _root.gameObject.SetActive(false);
         }
 
@@ -249,6 +335,10 @@ namespace Game.PlayerPanel
             else if (selectedObj == _stopButtonButton.gameObject)
             {
                 StopCurrentTrack();
+            }
+            else if (selectedObj == _recordButtonButton.gameObject)
+            {
+                StartCurrentRecording();
             }
             
             return true;
@@ -278,6 +368,7 @@ namespace Game.PlayerPanel
 
         private void OnCurrentTrackCompleted()
         {
+            StopCurrentRecording();
             _currentTrackAudioInfo = null;
             ResetCurrentTrackProgress();
         }
@@ -289,10 +380,21 @@ namespace Game.PlayerPanel
 
         private void OnDestroy()
         {
+            StopCurrentRecording();
+            _recordsPanel.StopPlayingRecord();
+
             if (_currentTrackData != null)
                 _currentTrackData.OnChangeName -= OnCurrentTrackNameChanged;
         }
 
         #endregion
+
+        protected override void Update()
+        {
+            base.Update();
+
+            if (_isRecording)
+                UpdateRecordTimeText();
+        }
     }
 }

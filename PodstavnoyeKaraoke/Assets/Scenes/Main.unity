@@ -1730,6 +1730,7 @@ MonoBehaviour:
   _stopButtonButton: {fileID: 351866266}
   _recordButtonButton: {fileID: 1472259302}
   _playTimeText: {fileID: 1229115372}
+  _recordTimeText: {fileID: 1131581367}
   _recordsPanel: {fileID: 1079560009}
 --- !u!1 &331196391
 GameObject:
