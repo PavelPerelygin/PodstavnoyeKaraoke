@@ -13,6 +13,7 @@ namespace Game.PlayerPanel
         [SerializeField] private Button _closeButton;
         [SerializeField] private InputField _namePlayerInputField;
         [SerializeField] private Button _removePlayerButton;
+        [SerializeField] private RecordsPanel.RecordsPanel _recordsPanel;
         
         private MainBoard _mainBoard;
         private PlayerData _playerData;
@@ -57,6 +58,8 @@ namespace Game.PlayerPanel
             _playerData = playerData;
             
             _namePlayerInputField.text = _playerData.GetNamePlayer();
+            
+            _recordsPanel.BuildRecords(playerData.GetRecords());
         }
         
         public void Hide()

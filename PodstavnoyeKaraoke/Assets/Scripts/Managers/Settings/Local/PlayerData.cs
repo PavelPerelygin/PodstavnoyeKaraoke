@@ -26,6 +26,15 @@ namespace Managers.Settings.Local
             return namePlayer;
         }
 
+        #region Records
+
+        public List<RecordData> GetRecords()
+        {
+            return records;
+        }
+
+        #endregion
+
         #region Events
 
         public void OnRemove()

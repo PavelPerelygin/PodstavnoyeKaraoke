@@ -38,13 +38,16 @@
     ],
     "players": [
         {
-            "namePlayer": "12222"
+            "namePlayer": "12222",
+            "records": []
         },
         {
-            "namePlayer": "Игрок"
+            "namePlayer": "Игрок",
+            "records": []
         },
         {
-            "namePlayer": "Игрок"
+            "namePlayer": "Игрок",
+            "records": []
         }
     ]
 }
