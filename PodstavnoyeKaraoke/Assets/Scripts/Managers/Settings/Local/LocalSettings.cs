@@ -13,10 +13,10 @@ namespace Managers.Settings.Local
         [NonSerialized] private bool _needWaitFrameToSave;
         
         public string microphoneName = "";
-        public float sensitivityMicrophone = 1;
+        public float sensitivityMicrophone = 100;
         public float trackVolume = 0.85f;
         public float recordVolume = 0.85f;
-        public bool autoRecord;
+        public bool autoRecord = true;
         public List<TrackData> tracks = new List<TrackData>();
         public List<PlayerData> players = new List<PlayerData>();
         

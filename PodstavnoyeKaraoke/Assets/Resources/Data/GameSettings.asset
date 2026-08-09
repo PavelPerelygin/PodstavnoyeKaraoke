@@ -21,7 +21,7 @@ MonoBehaviour:
   _telegramUrl: https://t.me/PerelyginPavel
   _gameDownloadUrl: https://vk.com/stasscheglov
   _packagesDownloadUrl: https://vk.com/stasscheglov
-  _cleanStreamingAssetsFolderInBuild: 0
+  _cleanStreamingAssetsFolderInBuild: 1
   _createSetuper: 0
   _runInBackground: 1
-  _enableFeedbackButtons: 1
+  _enableFeedbackButtons: 0
