@@ -62,6 +62,7 @@ namespace Game.PlayerPanel.RecordsPanel
             EnsurePlayingRecordAudioInfo(recordItem.RecordData);
             recordItem.SetDuration(GetPlayingRecordDuration());
             _playingRecordAudioInfo?.Play(false);
+            _playingRecordAudioInfo?.SetProgress(recordItem.Progress);
         }
 
         public void PauseRecord(RecordItem recordItem)

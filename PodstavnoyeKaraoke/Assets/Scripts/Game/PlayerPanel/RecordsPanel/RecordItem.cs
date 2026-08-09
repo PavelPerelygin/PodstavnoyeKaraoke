@@ -24,6 +24,7 @@ namespace Game.PlayerPanel.RecordsPanel
         private float _duration;
         private float _progress;
 
+        public float Progress => _progress;
         public RecordData RecordData {get; private set;}
 
         public void Init(RecordData recordData, RecordsPanel recordsPanel)
