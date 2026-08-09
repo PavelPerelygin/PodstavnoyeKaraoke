@@ -126,6 +126,7 @@ namespace Managers.Settings.Local
             if(!players.Contains(playerData))
                 return;
             
+            playerData.OnRemove();
             players.Remove(playerData);
             Save();
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Controllers;
 
 namespace Managers.Settings.Local
@@ -7,6 +8,7 @@ namespace Managers.Settings.Local
     public class PlayerData
     {
         public string namePlayer = "";
+        public List<RecordData> records = new List<RecordData>();
         
         public event Action OnChangeName;
         
@@ -23,5 +25,17 @@ namespace Managers.Settings.Local
         {
             return namePlayer;
         }
+
+        #region Events
+
+        public void OnRemove()
+        {
+            for (int i = 0; i < records.Count; i++)
+            {
+                records[i].OnRemove();
+            }
+        }
+
+        #endregion
     }
 }
