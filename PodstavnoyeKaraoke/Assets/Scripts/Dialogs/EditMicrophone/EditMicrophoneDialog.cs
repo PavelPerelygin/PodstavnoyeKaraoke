@@ -65,8 +65,10 @@ namespace Dialogs.EditMicrophone
 
         private void InitSlider()
         {
-            _sensitivityMicrophoneSlider.onValueChanged.AddListener(SliderPress);
-            _sensitivityMicrophoneSlider.value = MainController.Instance.LocalSettings.GetSensitivityMicrophone();
+            _sensitivityMicrophoneSlider.minValue = 0f;
+            _sensitivityMicrophoneSlider.maxValue = 100f;
+            _sensitivityMicrophoneSlider.SetValueWithoutNotify(MainController.Instance.LocalSettings.GetSensitivityMicrophone());
+            _sensitivityMicrophoneSlider.onValueChanged.AddListener(SetSensitivityMicrophone);
         }
 
         private void OnMicrophoneSelected(int index)
@@ -88,11 +90,7 @@ namespace Dialogs.EditMicrophone
             if(!base.GameObjectClickHandler(selectedObj))
                 return false;
             
-            if (selectedObj == _sensitivityMicrophoneSlider.gameObject)
-            {
-                SetSensitivityMicrophone(_sensitivityMicrophoneSlider.value);
-            }
-            else if (selectedObj == _closeButton.gameObject)
+            if (selectedObj == _closeButton.gameObject)
             {
                 Hide();
             }

@@ -18,6 +18,9 @@ namespace Controllers
         public void OpenDialog(TypeDialog type,float delay = 0f)
         {
             var dialog = CreateDialog(type);
+            if (dialog == null)
+                return;
+
             dialog.Init();
             dialog.Show(delay);
         }
@@ -33,7 +36,14 @@ namespace Controllers
 
             string path = $"Prefabs/Dialogs/{type}";
 
-            var dialog = MainController.Instance.CreateObj(Resources.Load<Dialog>(path), createLayer.transform);
+            var prefab = Resources.Load<Dialog>(path);
+            if (prefab == null)
+            {
+                Log.Assert($"dialog prefab not found: {path}");
+                return null;
+            }
+
+            var dialog = MainController.Instance.CreateObj(prefab, createLayer.transform);
             dialog.SetSortingLayerAndOrder(TypeLayer.Dialogs.ToString(),GetMaxDialogOrder());
 
             if (!dialog.HideOnSecondScreen)

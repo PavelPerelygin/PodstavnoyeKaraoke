@@ -19,7 +19,7 @@ namespace Managers.Audio
         public AudioManager()
         {
             _gameObject = MainController.Instance.CreateObj(new GameObject("Audio"), MainController.Instance.transform);
-            _mixer = Resources.Load("Audio/AudioMixer") as AudioMixer;
+            _mixer = Resources.Load("Audio/audioMixer") as AudioMixer;
             _audioSources = new List<AudioSource>();
         }
 
@@ -107,7 +107,21 @@ namespace Managers.Audio
 
         public void SetFloatParametr(string nameGroup, string nameParametr, float value)
         {
-            _mixer.FindMatchingGroups(nameGroup)[0].audioMixer.SetFloat(nameParametr, value);
+            if (_mixer == null)
+            {
+                Log.Assert("AudioMixer not found");
+                return;
+            }
+
+            var groups = _mixer.FindMatchingGroups(nameGroup);
+            if (groups == null || groups.Length <= 0)
+            {
+                Log.Assert($"AudioMixer group not found: {nameGroup}");
+                return;
+            }
+
+            if (!groups[0].audioMixer.SetFloat(nameParametr, value))
+                Log.Assert($"AudioMixer exposed parameter not found: {nameParametr}");
         }
         
         public float GetFloatParametr(string nameGroup, string nameParametr)

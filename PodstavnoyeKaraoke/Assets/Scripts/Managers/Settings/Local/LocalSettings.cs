@@ -14,6 +14,8 @@ namespace Managers.Settings.Local
         
         public string microphoneName = "";
         public float sensitivityMicrophone = 1;
+        public float trackVolume = 0.85f;
+        public float recordVolume = 0.85f;
         public bool autoRecord;
         public List<TrackData> tracks = new List<TrackData>();
         public List<PlayerData> players = new List<PlayerData>();
@@ -38,8 +40,7 @@ namespace Managers.Settings.Local
 
         public void SetSensitivityMicrophone(float value)
         {
-            if (value < 1) value = 1;
-            else if (value > 100) value = 100;
+            value = Mathf.Clamp(value, 0f, 100f);
             
             sensitivityMicrophone = value;
             
@@ -128,6 +129,34 @@ namespace Managers.Settings.Local
             
             playerData.OnRemove();
             players.Remove(playerData);
+            Save();
+        }
+
+        #endregion
+        
+        #region Volume track / record
+
+        public float GetTrackVolume()
+        {
+            return trackVolume;
+        }
+
+        public void SetTrackVolume(float value)
+        {
+            value = Mathf.Clamp01(value);
+            trackVolume = value;
+            Save();
+        }
+        
+        public float GetRecordVolume()
+        {
+            return  recordVolume;
+        }
+
+        public void SetRecordVolume(float value)
+        {
+            value = Mathf.Clamp01(value);
+            recordVolume = value;
             Save();
         }
 

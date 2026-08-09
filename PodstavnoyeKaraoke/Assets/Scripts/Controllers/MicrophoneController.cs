@@ -84,7 +84,7 @@ namespace Controllers
                 _recordedClip.GetData(array, num2);
                 for (int i = 0; i < _sampleWindow; i++)
                 {
-                    float num3 = array[i] * array[i];
+                    float num3 = Mathf.Abs(array[i]);
                     if (num < num3)
                     {
                         num = num3;
@@ -92,6 +92,7 @@ namespace Controllers
                 }
 
                 num *= MainController.Instance.LocalSettings.GetSensitivityMicrophone();
+                num = Mathf.Clamp(num, 0f, 100f);
 
                 return num;
             }
@@ -138,7 +139,7 @@ namespace Controllers
                 MainController.Instance.DialogsController.CreateDialog(TypeDialog.Warning) as WarningDialog;
             if (dialog != null)
             {
-                dialog.Init(MainController.Instance.TextManager.GetText(544));
+                dialog.Init(MainController.Instance.TextManager.GetText(1024));
                 dialog.Show(0.4f);
             }
 
@@ -230,6 +231,7 @@ namespace Controllers
                 {
                     var samples = new float[position * _recordingClip.channels];
                     _recordingClip.GetData(samples, 0);
+                    ApplySensitivityToSamples(samples);
 
                     var clip = AudioClip.Create("Record", position, _recordingClip.channels, _recordingClip.frequency, false);
                     clip.SetData(samples, 0);
@@ -249,6 +251,17 @@ namespace Controllers
             EnableMicrophone();
 
             return localPath;
+        }
+
+        private void ApplySensitivityToSamples(float[] samples)
+        {
+            var sensitivity = MainController.Instance.LocalSettings.GetSensitivityMicrophone();
+            var multiplier = Mathf.InverseLerp(0f, 100f, sensitivity);
+
+            for (int i = 0; i < samples.Length; i++)
+            {
+                samples[i] = Mathf.Clamp(samples[i] * multiplier, -1f, 1f);
+            }
         }
 
         #endregion

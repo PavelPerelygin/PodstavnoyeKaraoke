@@ -38,6 +38,12 @@ namespace Scenes
         
             float soundVolume = MainController.Instance.UserSettings.GetSoundVolume();
             MainController.Instance.AudioManager.SetVolumeAuidoGroup(TypeGroup.Sound,soundVolume);
+
+            float trackVolume = MainController.Instance.LocalSettings.GetTrackVolume();
+            MainController.Instance.AudioManager.SetVolumeAuidoGroup(TypeGroup.Track,trackVolume);
+
+            float recordVolume = MainController.Instance.LocalSettings.GetRecordVolume();
+            MainController.Instance.AudioManager.SetVolumeAuidoGroup(TypeGroup.Record,recordVolume);
         
             MainController.Instance.AudioManager.Create("Background",TypeGroup.Music).Play(true);
         }

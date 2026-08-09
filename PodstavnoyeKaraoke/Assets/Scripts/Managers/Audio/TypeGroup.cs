@@ -5,6 +5,7 @@ namespace Managers.Audio
         Music,
         Sound,
         Track,
+        Record,
         Other
     }
 }

@@ -9,9 +9,8 @@ namespace Game.PlayersPanel
 {
     public class PlayerItem : Interactable
     {
+        [SerializeField] private Button _button;
         [SerializeField] private Text _playerNameText;
-        [SerializeField] private Button _editButton;
-        [SerializeField] private Button _removeButton;
         
         private PlayersPanel _playersPanel;
         
@@ -34,11 +33,8 @@ namespace Game.PlayersPanel
 
         private void InitButtons()
         {
-            _editButton.onClick.AddListener(ButtonPress);
-            _editButton.DisableOverDownColors();
-            
-            _removeButton.onClick.AddListener(ButtonPress);
-            _removeButton.DisableOverDownColors();
+            _button.onClick.AddListener(ButtonPress);
+            _button.DisableOverDownColors();
         }
 
         private void OpenEditPlayerPanel()
@@ -46,23 +42,14 @@ namespace Game.PlayersPanel
             _playersPanel.OpenEditPlayerPanel(PlayerData);
         }
 
-        private void RemovePlayer()
-        {
-            _playersPanel.RemovePlayer(this);
-        }
-
         protected override bool GameObjectClickHandler(GameObject selectedObj)
         {
             if(!base.GameObjectClickHandler(selectedObj))
                 return false;
             
-            if(selectedObj == _editButton.gameObject)
+            if(selectedObj == _button.gameObject)
             {
                 OpenEditPlayerPanel();
-            }
-            else if(selectedObj == _removeButton.gameObject)
-            {
-                RemovePlayer();
             }
 
             return true;

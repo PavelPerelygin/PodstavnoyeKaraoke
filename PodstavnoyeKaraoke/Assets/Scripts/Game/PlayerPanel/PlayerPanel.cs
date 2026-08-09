@@ -50,6 +50,9 @@ namespace Game.PlayerPanel
         {
             _closeButton.onClick.AddListener(ButtonPress);
             _closeButton.DisableOverDownColors();
+
+            _removePlayerButton.onClick.AddListener(ButtonPress);
+            _removePlayerButton.DisableOverDownColors();
             
             _playButton.onClick.AddListener(ButtonPress);
             _playButton.DisableOverDownColors();
@@ -62,6 +65,8 @@ namespace Game.PlayerPanel
             
             _recordButtonButton.onClick.AddListener(ButtonPress);
             _recordButtonButton.DisableOverDownColors();
+
+            SetPlaybackButtonsState(false);
         }
 
         private void InitInputField()
@@ -123,6 +128,7 @@ namespace Game.PlayerPanel
 
             _currentTrackAudioInfo.Play(false);
             _currentTrackAudioInfo.SetProgress(_currentTrackProgress);
+            SetPlaybackButtonsState(true);
             UpdatePlayTimeText();
 
             if (MainController.Instance.LocalSettings.GetAutoRecord())
@@ -137,6 +143,7 @@ namespace Game.PlayerPanel
                 return;
 
             _currentTrackAudioInfo.Pause();
+            SetPlaybackButtonsState(false);
             UpdatePlayTimeText();
         }
 
@@ -152,6 +159,7 @@ namespace Game.PlayerPanel
             }
 
             ResetCurrentTrackProgress();
+            SetPlaybackButtonsState(false);
         }
 
         public void RemoveRecord(RecordData recordData)
@@ -223,6 +231,22 @@ namespace Game.PlayerPanel
             _isUpdatingTrackSlider = true;
             _currentTrackSlider.value = value;
             _isUpdatingTrackSlider = false;
+        }
+
+        private void SetPlaybackButtonsState(bool isPlaying)
+        {
+            SetButtonAlpha(_playButton, isPlaying ? 0.5f : 1f);
+            SetButtonAlpha(_pauseButton, isPlaying ? 1f : 0.5f);
+        }
+
+        private void SetButtonAlpha(Button button, float alpha)
+        {
+            if (button == null || button.targetGraphic == null)
+                return;
+
+            var color = button.targetGraphic.color;
+            color.a = alpha;
+            button.targetGraphic.color = color;
         }
 
         private void StartCurrentRecording()
@@ -301,6 +325,14 @@ namespace Game.PlayerPanel
             _mainBoard.OpenPlayersPanel();
         }
 
+        private void RemoveCurrentPlayer()
+        {
+            if (_playerData == null)
+                return;
+
+            _mainBoard.RemovePlayer(_playerData);
+        }
+
         #region Show / hide
 
         public void Show(PlayerData playerData)
@@ -331,6 +363,10 @@ namespace Game.PlayerPanel
             if (selectedObj == _closeButton.gameObject)
             {
                 OpenPlayersPanel();
+            }
+            else if (selectedObj == _removePlayerButton.gameObject)
+            {
+                RemoveCurrentPlayer();
             }
             else if (selectedObj == _playButton.gameObject)
             {
@@ -379,6 +415,7 @@ namespace Game.PlayerPanel
             StopCurrentRecording();
             _currentTrackAudioInfo = null;
             ResetCurrentTrackProgress();
+            SetPlaybackButtonsState(false);
         }
 
         private void OnCurrentTrackNameChanged()

@@ -3,6 +3,7 @@ using System.Linq;
 using Boards;
 using Controllers;
 using Extensions;
+using Managers.Audio;
 using UnityEngine;
 using UnityEngine.UI;
 using Utilities;
@@ -15,6 +16,8 @@ namespace Game.SettingsPanel
         [SerializeField] private Toggle _autoRecordToggle;
         [SerializeField] private Dropdown _microphoneNameDropdown;
         [SerializeField] private Slider _sensitivityMicrophoneSlider;
+        [SerializeField] private Slider _trackVolumeSlider;
+        [SerializeField] private Slider _recordVolumeSlider;
 
         private MainBoard _mainBoard;
         
@@ -44,8 +47,16 @@ namespace Game.SettingsPanel
         
         private void InitSlider()
         {
-            _sensitivityMicrophoneSlider.onValueChanged.AddListener(SliderPress);
-            _sensitivityMicrophoneSlider.value = MainController.Instance.LocalSettings.GetSensitivityMicrophone();
+            _sensitivityMicrophoneSlider.minValue = 0f;
+            _sensitivityMicrophoneSlider.maxValue = 100f;
+            _sensitivityMicrophoneSlider.SetValueWithoutNotify(MainController.Instance.LocalSettings.GetSensitivityMicrophone());
+            _sensitivityMicrophoneSlider.onValueChanged.AddListener(SetSensitivityMicrophone);
+
+            _trackVolumeSlider.SetValueWithoutNotify(MainController.Instance.LocalSettings.GetTrackVolume());
+            _trackVolumeSlider.onValueChanged.AddListener(SetTrackVolume);
+
+            _recordVolumeSlider.SetValueWithoutNotify(MainController.Instance.LocalSettings.GetRecordVolume());
+            _recordVolumeSlider.onValueChanged.AddListener(SetRecordVolume);
         }
         
         private void InitDropdown()
@@ -94,6 +105,20 @@ namespace Game.SettingsPanel
         {
             MainController.Instance.LocalSettings.SetSensitivityMicrophone(value);
         }
+
+        private void SetTrackVolume(float value)
+        {
+            value = Mathf.Clamp01(value);
+            MainController.Instance.LocalSettings.SetTrackVolume(value);
+            MainController.Instance.AudioManager.SetVolumeAuidoGroup(TypeGroup.Track, value);
+        }
+
+        private void SetRecordVolume(float value)
+        {
+            value = Mathf.Clamp01(value);
+            MainController.Instance.LocalSettings.SetRecordVolume(value);
+            MainController.Instance.AudioManager.SetVolumeAuidoGroup(TypeGroup.Record, value);
+        }
         
         private void UpdateScreenModeButton()
         {
@@ -129,10 +154,6 @@ namespace Game.SettingsPanel
             else if (selectedObj == _autoRecordToggle.gameObject)
             {
                 OnChangeAutoRecord();
-            }
-            else if (selectedObj == _sensitivityMicrophoneSlider.gameObject)
-            {
-                SetSensitivityMicrophone(_sensitivityMicrophoneSlider.value);
             }
             
             return true;

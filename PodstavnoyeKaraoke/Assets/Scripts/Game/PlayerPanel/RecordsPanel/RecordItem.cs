@@ -54,6 +54,8 @@ namespace Game.PlayerPanel.RecordsPanel
 
             _dowlandButton.onClick.AddListener(ButtonPress);
             _dowlandButton.DisableOverDownColors();
+
+            SetPlaybackButtonsState(false);
         }
 
         private void InitSlider()
@@ -83,6 +85,12 @@ namespace Game.PlayerPanel.RecordsPanel
             UpdatePlayTimeText();
         }
 
+        public void SetPlaybackButtonsState(bool isPlaying)
+        {
+            SetButtonAlpha(_playButton, isPlaying ? 0.5f : 1f);
+            SetButtonAlpha(_pauseButton, isPlaying ? 1f : 0.5f);
+        }
+
         private void DowlandRecord()
         {
             if (RecordData == null || !RecordData.IsExistRecord())
@@ -96,6 +104,16 @@ namespace Game.PlayerPanel.RecordsPanel
             _isUpdatingSlider = true;
             _slider.value = value;
             _isUpdatingSlider = false;
+        }
+
+        private void SetButtonAlpha(Button button, float alpha)
+        {
+            if (button == null || button.targetGraphic == null)
+                return;
+
+            var color = button.targetGraphic.color;
+            color.a = alpha;
+            button.targetGraphic.color = color;
         }
 
         private void UpdatePlayTimeText()

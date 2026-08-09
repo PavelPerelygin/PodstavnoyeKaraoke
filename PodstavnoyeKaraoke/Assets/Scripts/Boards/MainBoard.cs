@@ -54,6 +54,11 @@ namespace Boards
             _playerPanel.Show(playerData);
         }
 
+        public void RemovePlayer(PlayerData playerData)
+        {
+            _playersPanel.RemovePlayer(playerData, OpenPlayersPanel);
+        }
+
         public override void Init()
         {
             base.Init();

@@ -63,6 +63,7 @@ namespace Game.PlayerPanel.RecordsPanel
             recordItem.SetDuration(GetPlayingRecordDuration());
             _playingRecordAudioInfo?.Play(false);
             _playingRecordAudioInfo?.SetProgress(recordItem.Progress);
+            recordItem.SetPlaybackButtonsState(true);
         }
 
         public void PauseRecord(RecordItem recordItem)
@@ -71,6 +72,7 @@ namespace Game.PlayerPanel.RecordsPanel
                 return;
 
             _playingRecordAudioInfo.Pause();
+            recordItem.SetPlaybackButtonsState(false);
         }
 
         public void StopRecord(RecordItem recordItem)
@@ -115,6 +117,7 @@ namespace Game.PlayerPanel.RecordsPanel
 
             _playingRecordItem = null;
             recordItem?.ResetProgress();
+            recordItem?.SetPlaybackButtonsState(false);
         }
 
         private void EnsurePlayingRecordAudioInfo(RecordData recordData)
@@ -124,7 +127,7 @@ namespace Game.PlayerPanel.RecordsPanel
                 return;
 
             _playingRecordAudioInfo = MainController.Instance.AudioManager
-                .Create(recordData.GetPatchToRecord(), TypeGroup.Track, true)
+                .Create(recordData.GetPatchToRecord(), TypeGroup.Record, true)
                 .OnChangeProgress(OnPlayingRecordProgressChanged)
                 .OnCompleted(OnPlayingRecordCompleted);
         }
@@ -145,6 +148,7 @@ namespace Game.PlayerPanel.RecordsPanel
         private void OnPlayingRecordCompleted()
         {
             _playingRecordItem?.ResetProgress();
+            _playingRecordItem?.SetPlaybackButtonsState(false);
             _playingRecordAudioInfo = null;
             _playingRecordItem = null;
         }

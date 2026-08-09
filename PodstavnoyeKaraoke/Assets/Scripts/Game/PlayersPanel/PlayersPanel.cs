@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using Boards;
 using Controllers;
 using Extensions;
@@ -15,11 +16,11 @@ namespace Game.PlayersPanel
         [SerializeField] private ScrollRect _scrollRect;
         [SerializeField] private Button _addPlayerButton;
         [SerializeField] private PlayerItem _playerItemPrefab;
-        
+
         private MainBoard _mainBoard;
         private List<PlayerItem> _players = new List<PlayerItem>();
-        
-        public void Init (MainBoard mainBoard)
+
+        public void Init(MainBoard mainBoard)
         {
             _mainBoard = mainBoard;
 
@@ -43,34 +44,60 @@ namespace Game.PlayersPanel
                 CreatePlayerItem(players[i]);
             }
         }
-        
+
         private void CreatePlayerItem(PlayerData playerData)
         {
             var item = Instantiate(_playerItemPrefab, _scrollRect.content);
             item.Init(playerData, this);
-            
+
             item.transform.SetSiblingIndex(_scrollRect.content.childCount - 2);
-            
+
             _players.Add(item);
-            
+
             LayoutRebuilder.ForceRebuildLayoutImmediate(_scrollRect.content);
         }
 
         public void RemovePlayer(PlayerItem playerItem)
         {
-            var text = $"{MainController.Instance.TextManager.GetText(1009)} \"{playerItem.PlayerData.GetNamePlayer()}\"";
-            
+            if (playerItem == null)
+                return;
+
+            RemovePlayer(playerItem.PlayerData);
+        }
+
+        public void RemovePlayer(PlayerData playerData, Action onRemoved = null)
+        {
+            if (playerData == null)
+                return;
+
+            var text = $"{MainController.Instance.TextManager.GetText(1009)} \"{playerData.GetNamePlayer()}\"";
+
             MainController.Instance.DialogsController.OpenConfirmDialog(text, () =>
             {
-                MainController.Instance.LocalSettings.RemovePlayer(playerItem.PlayerData);
-            
-                if(_players.Contains(playerItem))
+                MainController.Instance.LocalSettings.RemovePlayer(playerData);
+
+                var playerItem = GetPlayerItem(playerData);
+                if (_players.Contains(playerItem))
                     _players.Remove(playerItem);
-            
-                Destroy(playerItem.gameObject);
-            },null);
+
+                if (playerItem != null)
+                    Destroy(playerItem.gameObject);
+
+                onRemoved?.Invoke();
+            }, null);
         }
-        
+
+        private PlayerItem GetPlayerItem(PlayerData playerData)
+        {
+            for (int i = 0; i < _players.Count; i++)
+            {
+                if (_players[i].PlayerData == playerData)
+                    return _players[i];
+            }
+
+            return null;
+        }
+
         public void OpenEditPlayerPanel(PlayerData playerData)
         {
             _mainBoard.OpenPlayerPanel(playerData);
@@ -80,7 +107,7 @@ namespace Game.PlayersPanel
         {
             var data = MainController.Instance.LocalSettings.CreatePlayer();
             CreatePlayerItem(data);
-            
+
             _scrollRect.verticalNormalizedPosition = 0;
         }
 
@@ -102,12 +129,12 @@ namespace Game.PlayersPanel
         {
             if(!base.GameObjectClickHandler(selectedObj))
                 return false;
-            
+
             if (selectedObj == _addPlayerButton.gameObject)
             {
                 AddPlayer();
             }
-            
+
             return true;
         }
     }
