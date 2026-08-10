@@ -180,15 +180,26 @@ namespace Controllers
 
         public bool StartRecording()
         {
+            Log($"StartRecording requested. State before: {GetRecordingStateForLog()}");
+
             if (_isRecording)
+            {
+                Log("StartRecording skipped because track recording is already active.");
                 return true;
+            }
 
             if (!CheckSelectionMicrophone())
+            {
+                Log("StartRecording failed because microphone selection check failed.");
                 return false;
+            }
 
             var micName = MainController.Instance.LocalSettings.GetMicrophoneName();
             if (string.IsNullOrEmpty(micName) || !CheckAvailableMicrophoneByName(micName))
+            {
+                Log($"StartRecording failed because selected microphone is unavailable. Requested: '{micName}'. Available: {GetAvailableMicrophonesForLog()}");
                 return false;
+            }
 
             DisableMicrophone();
             _micName = micName;
@@ -202,6 +213,8 @@ namespace Controllers
 
                 if (!_isRecording)
                     LogError($"Microphone.Start returned null recording clip. Selected: '{_micName}'.");
+                else
+                    Log($"StartRecording succeeded. Frequency: {frequency}. Recording clip: {GetClipInfoForLog(_recordingClip)}. State after: {GetRecordingStateForLog()}");
 
                 return _isRecording;
             }
@@ -217,19 +230,27 @@ namespace Controllers
 
         public string StopRecordingToStreamingAssets()
         {
+            Log($"StopRecordingToStreamingAssets requested. State before: {GetRecordingStateForLog()}");
+
             if (!_isRecording)
+            {
+                Log("StopRecordingToStreamingAssets skipped because track recording flag is false.");
                 return "";
+            }
 
             var localPath = "";
 
             try
             {
                 int position = Microphone.GetPosition(_micName);
+                Log($"StopRecordingToStreamingAssets microphone position before End: {position}. State: {GetRecordingStateForLog()}");
                 Microphone.End(_micName);
+                Log($"StopRecordingToStreamingAssets called Microphone.End. Recording clip: {GetClipInfoForLog(_recordingClip)}");
 
                 if (_recordingClip != null && position > 0)
                 {
                     var samples = new float[position * _recordingClip.channels];
+                    Log($"StopRecordingToStreamingAssets reading samples. Position: {position}. Channels: {_recordingClip.channels}. Samples array length: {samples.Length}.");
                     _recordingClip.GetData(samples, 0);
                     ApplySensitivityToSamples(samples);
 
@@ -239,6 +260,11 @@ namespace Controllers
                     string unusedPath;
                     var bytes = WavUtility.FromAudioClip(clip, out unusedPath, false);
                     localPath = FileUtility.SaveBytesToStreamingAssets(bytes, ".wav");
+                    Log($"StopRecordingToStreamingAssets saved recording. Bytes: {bytes.Length}. Local path: '{localPath}'.");
+                }
+                else
+                {
+                    LogError($"StopRecordingToStreamingAssets did not save recording. Recording clip null: {_recordingClip == null}. Position: {position}. State: {GetRecordingStateForLog()}");
                 }
             }
             catch (Exception exception)
@@ -250,6 +276,7 @@ namespace Controllers
             _isRecording = false;
             EnableMicrophone();
 
+            Log($"StopRecordingToStreamingAssets completed. Result path: '{localPath}'. State after: {GetRecordingStateForLog()}");
             return localPath;
         }
 
@@ -269,8 +296,12 @@ namespace Controllers
         private void EnableMicrophone()
         {
             if (_isRecording)
+            {
+                Log("EnableMicrophone skipped because track recording is active.");
                 return;
+            }
 
+            Log($"EnableMicrophone requested. State before: {GetRecordingStateForLog()}");
             DisableMicrophone();
 
             var micName = MainController.Instance.LocalSettings.GetMicrophoneName();
@@ -279,6 +310,7 @@ namespace Controllers
             {
                 _micName = "";
                 _recordedClip = null;
+                Log("EnableMicrophone skipped because no microphone is selected.");
                 return;
             }
 
@@ -300,6 +332,8 @@ namespace Controllers
                     LogError($"Microphone.Start returned null clip. Selected: '{_micName}'.");
                 else if (!Microphone.IsRecording(_micName))
                     LogError($"Microphone.Start returned clip, but recording is not active. Selected: '{_micName}'.");
+                else
+                    Log($"EnableMicrophone succeeded. Frequency: {frequency}. Monitoring clip: {GetClipInfoForLog(_recordedClip)}. State after: {GetRecordingStateForLog()}");
             }
             catch (Exception exception)
             {
@@ -312,20 +346,25 @@ namespace Controllers
         {
             try
             {
+                Log($"DisableMicrophone requested. State before: {GetRecordingStateForLog()}");
+
                 if (string.IsNullOrEmpty(_micName))
                 {
                     _recordedClip = null;
                     ResetPositionState();
+                    Log("DisableMicrophone completed with empty microphone name.");
                     return;
                 }
 
                 if (Microphone.IsRecording(_micName) || _recordedClip != null)
                 {
+                    Log($"DisableMicrophone calling Microphone.End for '{_micName}'. Monitoring clip: {GetClipInfoForLog(_recordedClip)}");
                     Microphone.End(_micName);
                 }
 
                 _recordedClip = null;
                 ResetPositionState();
+                Log($"DisableMicrophone completed. State after: {GetRecordingStateForLog()}");
             }
             catch (Exception exception)
             {
@@ -339,6 +378,7 @@ namespace Controllers
 
         private void OnChangeMicrophoneName()
         {
+            Log($"Microphone selection changed. New selected microphone: '{MainController.Instance.LocalSettings.GetMicrophoneName()}'.");
             EnableMicrophone();
         }
 
@@ -423,6 +463,20 @@ namespace Controllers
         private bool IsFrequencySupported(int frequency, int minFrequency, int maxFrequency)
         {
             return frequency >= minFrequency && frequency <= maxFrequency;
+        }
+
+        private string GetRecordingStateForLog()
+        {
+            return $"mic='{_micName}', trackRecordingFlag={_isRecording}, selected='{MainController.Instance.LocalSettings.GetMicrophoneName()}', " +
+                   $"isRecording={GetIsRecordingForLog(_micName)}, recordingClip={GetClipInfoForLog(_recordingClip)}, monitoringClip={GetClipInfoForLog(_recordedClip)}";
+        }
+
+        private string GetClipInfoForLog(AudioClip clip)
+        {
+            if (clip == null)
+                return "null";
+
+            return $"name='{clip.name}', samples={clip.samples}, channels={clip.channels}, frequency={clip.frequency}, length={clip.length:0.000}";
         }
 
         private void WriteErrorToFile(string message, Exception exception)

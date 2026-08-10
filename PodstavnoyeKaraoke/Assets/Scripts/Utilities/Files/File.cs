@@ -237,9 +237,11 @@ namespace Utilities.Files
             string fileName = System.Guid.NewGuid() + extension;
             string path = PathCombine(GetPathToStreamingAssets(),where,fileName);
             
+            Debug.Log($"[FileUtility] SaveBytesToStreamingAssets requested. Extension: '{extension}'. Folder: '{where}'. Bytes: {(bytes == null ? -1 : bytes.Length)}. Full path: '{path}'.");
             System.IO.File.WriteAllBytes(path,bytes);
             
             string localPath = PathCombine(where, fileName);
+            Debug.Log($"[FileUtility] SaveBytesToStreamingAssets completed. Local path: '{localPath}'. Full path: '{path}'.");
             
             return localPath;
         }
@@ -318,11 +320,19 @@ namespace Utilities.Files
         {
             string fullPath = PathCombine(GetPathToStreamingAssets(), path);
             
+            Debug.Log($"[FileUtility] LoadAudioClipFromStreamingAssets requested. Local path: '{path}'. Full path: '{fullPath}'. Exists: {System.IO.File.Exists(fullPath)}.");
             WWW www = new WWW("file://" + fullPath);
         
             AudioClip clip = www.GetAudioClip(false, true, AudioType.WAV);
 
+            if (clip == null)
+            {
+                Debug.Log($"[FileUtility] LoadAudioClipFromStreamingAssets completed with null clip. Local path: '{path}'. WWW error: '{www.error}'.");
+                return null;
+            }
+
             clip.name = "Track";
+            Debug.Log($"[FileUtility] LoadAudioClipFromStreamingAssets completed. Local path: '{path}'. Clip length: {clip.length:0.000}. Samples: {clip.samples}. Channels: {clip.channels}. Frequency: {clip.frequency}. WWW error: '{www.error}'.");
             return clip;
         }
         

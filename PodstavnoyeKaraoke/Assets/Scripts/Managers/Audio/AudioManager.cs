@@ -33,6 +33,8 @@ namespace Managers.Audio
 
         public AudioInfo Create(string path, TypeGroup typeGroup,bool external = false)
         {
+            Utilities.Log.Message($"[AudioManager] Create requested. Path: '{path}'. TypeGroup: {typeGroup}. External: {external}. Existing AudioInfo count: {_audioInfos.Count}.");
+
             var audioInfo = new AudioInfo
             {
                 TypeGroup = typeGroup,
@@ -54,8 +56,11 @@ namespace Managers.Audio
 
             if (audioInfo.AudioClip == null)
                 Log.Assert("clip not found");
+            else
+                Utilities.Log.Message($"[AudioManager] Create loaded clip. Name: '{audioInfo.Name}'. Full path: '{audioInfo.Path}'. Clip length: {audioInfo.AudioClip.length:0.000}. Samples: {audioInfo.AudioClip.samples}. Channels: {audioInfo.AudioClip.channels}. Frequency: {audioInfo.AudioClip.frequency}.");
 
             _audioInfos.Add(audioInfo);
+            Utilities.Log.Message($"[AudioManager] Create completed. AudioInfo count: {_audioInfos.Count}. State: {audioInfo.GetDebugState()}");
 
             return audioInfo;
         }
@@ -63,11 +68,16 @@ namespace Managers.Audio
         public void RemoveAudioInfo(AudioInfo audioInfo)
         {
             if(!_audioInfos.Contains(audioInfo))
+            {
+                Utilities.Log.Message($"[AudioManager] RemoveAudioInfo skipped because AudioInfo is not registered. AudioInfo null: {audioInfo == null}. Count: {_audioInfos.Count}.");
                 return;
+            }
 
+            Utilities.Log.Message($"[AudioManager] RemoveAudioInfo requested. Count before: {_audioInfos.Count}. State: {audioInfo.GetDebugState()}");
             _audioInfos.Remove(audioInfo);
             
             Resources.UnloadUnusedAssets();
+            Utilities.Log.Message($"[AudioManager] RemoveAudioInfo completed. Count after: {_audioInfos.Count}.");
         }
 
         public bool CheckContainsAudioInfo(AudioInfo audioInfo)

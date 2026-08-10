@@ -98,6 +98,7 @@ namespace Game.PlayerPanel
             if (_currentTrackData == trackData)
                 return;
 
+            Log($"SetCurrentTrack requested. Previous: {GetTrackDataInfoForLog(_currentTrackData)}. New: {GetTrackDataInfoForLog(trackData)}. Panel state: {GetPanelStateForLog()}");
             StopCurrentTrack();
 
             if (_currentTrackData != null)
@@ -117,14 +118,22 @@ namespace Game.PlayerPanel
 
         private void PlayCurrentTrack()
         {
+            Log($"PlayCurrentTrack requested. State before: {GetPanelStateForLog()}");
+
             if (_currentTrackData == null || !_currentTrackData.IsExist())
+            {
+                Log($"PlayCurrentTrack skipped because current track is missing or does not exist. Track: {GetTrackDataInfoForLog(_currentTrackData)}");
                 return;
+            }
 
             _recordsPanel.StopPlayingRecord();
             EnsureCurrentTrackAudioInfo();
 
             if (_currentTrackAudioInfo == null)
+            {
+                Log("PlayCurrentTrack skipped because AudioInfo is null after EnsureCurrentTrackAudioInfo.");
                 return;
+            }
 
             _currentTrackAudioInfo.Play(false);
             _currentTrackAudioInfo.SetProgress(_currentTrackProgress);
@@ -133,22 +142,30 @@ namespace Game.PlayerPanel
 
             if (MainController.Instance.LocalSettings.GetAutoRecord())
                 StartCurrentRecording();
+
+            Log($"PlayCurrentTrack completed. State after: {GetPanelStateForLog()}");
         }
 
         private void PauseCurrentTrack()
         {
+            Log($"PauseCurrentTrack requested. State before: {GetPanelStateForLog()}");
             StopCurrentRecording();
 
             if (_currentTrackAudioInfo == null)
+            {
+                Log("PauseCurrentTrack stopped after StopCurrentRecording because current track AudioInfo is null.");
                 return;
+            }
 
             _currentTrackAudioInfo.Pause();
             SetPlaybackButtonsState(false);
             UpdatePlayTimeText();
+            Log($"PauseCurrentTrack completed. State after: {GetPanelStateForLog()}");
         }
 
         public void StopCurrentTrack()
         {
+            Log($"StopCurrentTrack requested. State before: {GetPanelStateForLog()}");
             StopCurrentRecording();
 
             if (_currentTrackAudioInfo != null)
@@ -160,6 +177,7 @@ namespace Game.PlayerPanel
 
             ResetCurrentTrackProgress();
             SetPlaybackButtonsState(false);
+            Log($"StopCurrentTrack completed. State after: {GetPanelStateForLog()}");
         }
 
         public void RemoveRecord(RecordData recordData)
@@ -174,12 +192,17 @@ namespace Game.PlayerPanel
         {
             if (_currentTrackAudioInfo != null &&
                 MainController.Instance.AudioManager.CheckContainsAudioInfo(_currentTrackAudioInfo))
+            {
+                Log($"EnsureCurrentTrackAudioInfo reused existing AudioInfo. State: {GetPanelStateForLog()}");
                 return;
+            }
 
+            Log($"EnsureCurrentTrackAudioInfo creating AudioInfo for track: {GetTrackDataInfoForLog(_currentTrackData)}");
             _currentTrackAudioInfo = MainController.Instance.AudioManager
                 .Create(_currentTrackData.GetPathTrack(), TypeGroup.Track, true)
                 .OnChangeProgress(OnCurrentTrackProgressChanged)
                 .OnCompleted(OnCurrentTrackCompleted);
+            Log($"EnsureCurrentTrackAudioInfo created AudioInfo. State: {GetPanelStateForLog()}");
         }
 
         private void ResetCurrentTrackView()
@@ -251,36 +274,60 @@ namespace Game.PlayerPanel
 
         private void StartCurrentRecording()
         {
+            Log($"StartCurrentRecording requested. State before: {GetPanelStateForLog()}");
+
             if (_isRecording)
+            {
+                Log("StartCurrentRecording skipped because panel recording flag is already true.");
                 return;
+            }
 
             if (_playerData == null || _currentTrackData == null)
+            {
+                Log($"StartCurrentRecording skipped because player or track is null. Player null: {_playerData == null}. Track: {GetTrackDataInfoForLog(_currentTrackData)}");
                 return;
+            }
 
             if (!MainController.Instance.MicrophoneController.StartRecording())
+            {
+                Log("StartCurrentRecording failed because MicrophoneController.StartRecording returned false.");
                 return;
+            }
 
             _isRecording = true;
             _recordStartTime = Time.time;
             UpdateRecordTimeText();
+            Log($"StartCurrentRecording completed. State after: {GetPanelStateForLog()}");
         }
 
         private void StopCurrentRecording()
         {
+            Log($"StopCurrentRecording requested. State before: {GetPanelStateForLog()}");
+
             if (!_isRecording)
+            {
+                Log("StopCurrentRecording skipped because panel recording flag is false.");
                 return;
+            }
 
             _isRecording = false;
 
             var patchToRecord = MainController.Instance.MicrophoneController.StopRecordingToStreamingAssets();
+            Log($"StopCurrentRecording got recording path: '{patchToRecord}'. Player null: {_playerData == null}. Track null: {_currentTrackData == null}.");
             if (!string.IsNullOrEmpty(patchToRecord) && _playerData != null && _currentTrackData != null)
             {
                 var recordName = GetUniqueRecordName(_currentTrackData.GetNameTrack());
                 var recordData = _playerData.AddRecord(recordName, patchToRecord);
                 _recordsPanel.AddRecord(recordData);
+                Log($"StopCurrentRecording added record. Name: '{recordName}'. Path: '{patchToRecord}'.");
+            }
+            else
+            {
+                Log($"StopCurrentRecording did not add record. Empty path: {string.IsNullOrEmpty(patchToRecord)}. Player null: {_playerData == null}. Track null: {_currentTrackData == null}.");
             }
 
             ResetRecordTimeText();
+            Log($"StopCurrentRecording completed. State after: {GetPanelStateForLog()}");
         }
 
         private string GetUniqueRecordName(string baseName)
@@ -337,6 +384,7 @@ namespace Game.PlayerPanel
 
         public void Show(PlayerData playerData)
         {
+            Log($"Show requested. Player null: {playerData == null}. State before: {GetPanelStateForLog()}");
             _root.gameObject.SetActive(true);
             
             _playerData = playerData;
@@ -348,9 +396,11 @@ namespace Game.PlayerPanel
         
         public void Hide()
         {
+            Log($"Hide requested. State before: {GetPanelStateForLog()}");
             StopCurrentTrack();
             _recordsPanel.StopPlayingRecord();
             _root.gameObject.SetActive(false);
+            Log($"Hide completed. State after: {GetPanelStateForLog()}");
         }
 
         #endregion
@@ -362,26 +412,32 @@ namespace Game.PlayerPanel
 
             if (selectedObj == _closeButton.gameObject)
             {
+                Log("Button clicked: close.");
                 OpenPlayersPanel();
             }
             else if (selectedObj == _removePlayerButton.gameObject)
             {
+                Log("Button clicked: remove player.");
                 RemoveCurrentPlayer();
             }
             else if (selectedObj == _playButton.gameObject)
             {
+                Log("Button clicked: play.");
                 PlayCurrentTrack();
             }
             else if (selectedObj == _pauseButton.gameObject)
             {
+                Log("Button clicked: pause.");
                 PauseCurrentTrack();
             }
             else if (selectedObj == _stopButtonButton.gameObject)
             {
+                Log("Button clicked: stop.");
                 StopCurrentTrack();
             }
             else if (selectedObj == _recordButtonButton.gameObject)
             {
+                Log("Button clicked: record.");
                 StartCurrentRecording();
             }
             
@@ -395,6 +451,7 @@ namespace Game.PlayerPanel
             if (_isUpdatingTrackSlider)
                 return;
 
+            Log($"Track slider changed by user. Value: {value:0.000}. State before: {GetPanelStateForLog()}");
             _currentTrackProgress = value;
 
             if (_currentTrackAudioInfo != null)
@@ -412,10 +469,12 @@ namespace Game.PlayerPanel
 
         private void OnCurrentTrackCompleted()
         {
+            Log($"OnCurrentTrackCompleted invoked. State before: {GetPanelStateForLog()}");
             StopCurrentRecording();
             _currentTrackAudioInfo = null;
             ResetCurrentTrackProgress();
             SetPlaybackButtonsState(false);
+            Log($"OnCurrentTrackCompleted completed. State after: {GetPanelStateForLog()}");
         }
 
         private void OnCurrentTrackNameChanged()
@@ -425,6 +484,7 @@ namespace Game.PlayerPanel
 
         private void OnDestroy()
         {
+            Log($"OnDestroy invoked. State before: {GetPanelStateForLog()}");
             StopCurrentRecording();
             _recordsPanel.StopPlayingRecord();
 
@@ -440,6 +500,26 @@ namespace Game.PlayerPanel
 
             if (_isRecording)
                 UpdateRecordTimeText();
+        }
+
+        private void Log(string message)
+        {
+            Utilities.Log.Message($"[PlayerPanel] {message}");
+        }
+
+        private string GetPanelStateForLog()
+        {
+            var audioInfoState = _currentTrackAudioInfo == null ? "null" : _currentTrackAudioInfo.GetDebugState();
+            return $"panelRecording={_isRecording}, recordElapsed={(Time.time - _recordStartTime):0.000}, progress={_currentTrackProgress:0.000}, " +
+                   $"playerNull={_playerData == null}, track={GetTrackDataInfoForLog(_currentTrackData)}, audioInfo={audioInfoState}";
+        }
+
+        private string GetTrackDataInfoForLog(TrackData trackData)
+        {
+            if (trackData == null)
+                return "null";
+
+            return $"name='{trackData.GetNameTrack()}', path='{trackData.GetPathTrack()}', exists={trackData.IsExist()}";
         }
     }
 }

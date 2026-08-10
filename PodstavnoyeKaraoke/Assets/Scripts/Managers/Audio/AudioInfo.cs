@@ -31,6 +31,7 @@ namespace Managers.Audio
 
         private AudioManager _audioManager;
         private LTDescr _fadeLTD;
+        private bool _loggedUnexpectedStoppedAtStart;
         
         public bool _wasPlay;
 
@@ -78,6 +79,7 @@ namespace Managers.Audio
             
             if ((AudioSource.time >= AudioClip.length) ||(AudioSource.time <= 0 && !AudioSource.isPlaying))
             {
+                LogDebug($"CheckCompletedTrack detected completed/stopped state. State before completion handling: {GetDebugState()}");
                 _wasPlay = false;
                 AudioSource.time = 0f;
 
@@ -88,6 +90,11 @@ namespace Managers.Audio
                     
                     _completed?.Invoke();
                 }
+            }
+            else if (_wasPlay && !AudioSource.isPlaying && !_loggedUnexpectedStoppedAtStart)
+            {
+                _loggedUnexpectedStoppedAtStart = true;
+                LogDebug($"AudioSource is not playing while AudioInfo thinks it was playing. State: {GetDebugState()}");
             }
         }
 
@@ -144,22 +151,30 @@ namespace Managers.Audio
         public AudioInfo Play(bool loop = false, float volume = 1f)
         {
             if(_wasPlay)
+            {
+                LogDebug($"Play skipped because _wasPlay is already true. State: {GetDebugState()}");
                 return this;
+            }
                 
             if (!_audioManager.CheckContainsAudioInfo(this))
             {
                 Log.Assert("AudioInfo not found");
+                LogDebug($"Play failed because AudioInfo is not registered. State: {GetDebugState()}");
                 return this;
             }
             
             if (AudioClip == null)
             {
+                LogDebug($"Play failed because AudioClip is null. State before Remove: {GetDebugState()}");
                 Remove();
                 return this;
             }
 
             if (AudioSource == null || AudioSource.clip != AudioClip)
+            {
+                LogDebug($"Play requesting free AudioSource. Current state: {GetDebugState()}");
                 AudioSource = _audioManager.GetFreeAudioSource();
+            }
 
             AudioSource.outputAudioMixerGroup = _audioManager.GetAudioMixerGroup(TypeGroup);
             
@@ -170,6 +185,8 @@ namespace Managers.Audio
             AudioSource.Play();
 
             _wasPlay = true;
+            _loggedUnexpectedStoppedAtStart = false;
+            LogDebug($"Play started. Loop: {loop}. Volume: {volume:0.000}. State after AudioSource.Play: {GetDebugState()}");
 
             if (FadeInTime > 0)
             {
@@ -185,14 +202,20 @@ namespace Managers.Audio
 
         public AudioInfo Stop()
         {
+            LogDebug($"Stop requested. State before: {GetDebugState()}");
+
             if (!_audioManager.CheckContainsAudioInfo(this))
             {
                 Log.Assert("AudioInfo not found");
+                LogDebug($"Stop failed because AudioInfo is not registered. State: {GetDebugState()}");
                 return this;
             }
             
             if (AudioClip == null || AudioSource == null)
+            {
+                LogDebug($"Stop skipped because AudioClip or AudioSource is null. State: {GetDebugState()}");
                 return this;
+            }
 
             _wasPlay = false;
             
@@ -206,19 +229,28 @@ namespace Managers.Audio
 
         public AudioInfo Pause()
         {
+            LogDebug($"Pause requested. State before: {GetDebugState()}");
+
             if (!_audioManager.CheckContainsAudioInfo(this))
             {
                 Log.Assert("AudioInfo not found");
+                LogDebug($"Pause failed because AudioInfo is not registered. State: {GetDebugState()}");
                 return this;
             }
             
             if (AudioClip == null || AudioSource == null)
+            {
+                LogDebug($"Pause skipped because AudioClip or AudioSource is null. State: {GetDebugState()}");
                 return this;
+            }
 
             _wasPlay = false;
             
             if(!AudioSource.isPlaying)
+            {
+                LogDebug($"Pause skipped because AudioSource is already not playing. State: {GetDebugState()}");
                 return this;
+            }
 
             if (FadeOutTime > 0)
                 SmoothChangeVolume(0, FadeOutTime,PauseAudioSource);
@@ -256,17 +288,24 @@ namespace Managers.Audio
         
         public AudioInfo SetProgress(float value)
         {
+            LogDebug($"SetProgress requested. Value: {value:0.000}. State before: {GetDebugState()}");
+
             if (!_audioManager.CheckContainsAudioInfo(this))
             {
                 Log.Assert("AudioInfo not found");
+                LogDebug($"SetProgress failed because AudioInfo is not registered. State: {GetDebugState()}");
                 return this;
             }
             
             if (AudioClip == null || AudioSource == null)
+            {
+                LogDebug($"SetProgress skipped because AudioClip or AudioSource is null. State: {GetDebugState()}");
                 return this;
+            }
 
             float time = Mathf.Lerp(0, AudioClip.length, value);
             AudioSource.time = time;
+            LogDebug($"SetProgress completed. Target time: {time:0.000}. State after: {GetDebugState()}");
 
             return this;
         }
@@ -312,18 +351,22 @@ namespace Managers.Audio
         
         private void StopAudioSource()
         {
+            LogDebug($"StopAudioSource invoked. State before AudioSource.Stop: {GetDebugState()}");
             AudioSource.Stop();
             if (RemoveAfterStop)
                 Remove();
             
             _stop?.Invoke();
+            LogDebug($"StopAudioSource completed. State after: {GetDebugState()}");
         }
 
         private void PauseAudioSource()
         {
+            LogDebug($"PauseAudioSource invoked. State before AudioSource.Pause: {GetDebugState()}");
             AudioSource.Pause();
             
             _pause?.Invoke();
+            LogDebug($"PauseAudioSource completed. State after: {GetDebugState()}");
         }
 
         private void SmoothChangeVolume(float needValue,float time = 1f, Action onCompleted = null)
@@ -349,10 +392,30 @@ namespace Managers.Audio
 
         public void Remove()
         {
+            LogDebug($"Remove requested. State before: {GetDebugState()}");
             if(AudioSource != null)
                 AudioSource.clip = null;
                 
             _audioManager.RemoveAudioInfo(this);
+            LogDebug($"Remove completed. State after: {GetDebugState()}");
+        }
+
+        public string GetDebugState()
+        {
+            var clipState = AudioClip == null
+                ? "clip=null"
+                : $"clip='{AudioClip.name}', length={AudioClip.length:0.000}, samples={AudioClip.samples}, channels={AudioClip.channels}, frequency={AudioClip.frequency}";
+
+            var sourceState = AudioSource == null
+                ? "source=null"
+                : $"sourcePlaying={AudioSource.isPlaying}, sourceTime={AudioSource.time:0.000}, sourceLoop={AudioSource.loop}, sourceClip='{(AudioSource.clip == null ? "null" : AudioSource.clip.name)}'";
+
+            return $"name='{Name}', path='{Path}', group={TypeGroup}, external={External}, wasPlay={_wasPlay}, {clipState}, {sourceState}";
+        }
+
+        private void LogDebug(string message)
+        {
+            Utilities.Log.Message($"[AudioInfo] {message}");
         }
     }
 }
