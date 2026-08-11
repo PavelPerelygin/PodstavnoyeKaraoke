@@ -218,15 +218,22 @@ namespace Utilities.Files
             var name = Path.GetFileName(localPath);
             
             var path = StandaloneFileBrowser.SaveFilePanel(header, "", name, extensions);
-            if (path != "")
+            if (!string.IsNullOrEmpty(path))
             {
                 var globalPath = GetGlobalPath(localPath);
+                if (!System.IO.File.Exists(globalPath))
+                {
+                    Debug.LogError($"[FileUtility] SaveFile failed because source file does not exist. Local path: '{localPath}'. Full path: '{globalPath}'.");
+                    onNotSave?.Invoke();
+                    return;
+                }
+
                 System.IO.File.Copy(globalPath, path, true);
                 onSave?.Invoke(path);
             }
             else
             {
-                onNotSave.Invoke();
+                onNotSave?.Invoke();
             }
         }
 

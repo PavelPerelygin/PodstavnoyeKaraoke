@@ -24,6 +24,7 @@ namespace Controllers
         private float _nextRestartMicrophoneTime;
         private float _lastPositionChangedTime;
         private int _lastMicrophonePosition = -1;
+        private int _lastRecordingPosition;
         private bool _isRecording;
 
         public void Init()
@@ -210,6 +211,7 @@ namespace Controllers
                 var frequency = GetSupportedFrequency(_micName);
                 _recordingClip = Microphone.Start(_micName, false, MaxRecordingLengthSeconds, frequency);
                 _isRecording = _recordingClip != null;
+                _lastRecordingPosition = 0;
 
                 if (!_isRecording)
                     LogError($"Microphone.Start returned null recording clip. Selected: '{_micName}'.");
@@ -242,19 +244,20 @@ namespace Controllers
 
             try
             {
-                int position = Microphone.GetPosition(_micName);
+                int position = GetRecordingPositionForStop();
+                var actualPosition = GetActualRecordingPosition(position);
                 Log($"StopRecordingToStreamingAssets microphone position before End: {position}. State: {GetRecordingStateForLog()}");
                 Microphone.End(_micName);
                 Log($"StopRecordingToStreamingAssets called Microphone.End. Recording clip: {GetClipInfoForLog(_recordingClip)}");
 
-                if (_recordingClip != null && position > 0)
+                if (_recordingClip != null && actualPosition > 0)
                 {
-                    var samples = new float[position * _recordingClip.channels];
-                    Log($"StopRecordingToStreamingAssets reading samples. Position: {position}. Channels: {_recordingClip.channels}. Samples array length: {samples.Length}.");
+                    var samples = new float[actualPosition * _recordingClip.channels];
+                    Log($"StopRecordingToStreamingAssets reading samples. Position: {actualPosition}. Last raw position: {position}. Channels: {_recordingClip.channels}. Samples array length: {samples.Length}.");
                     _recordingClip.GetData(samples, 0);
                     ApplySensitivityToSamples(samples);
 
-                    var clip = AudioClip.Create("Record", position, _recordingClip.channels, _recordingClip.frequency, false);
+                    var clip = AudioClip.Create("Record", actualPosition, _recordingClip.channels, _recordingClip.frequency, false);
                     clip.SetData(samples, 0);
 
                     string unusedPath;
@@ -264,7 +267,7 @@ namespace Controllers
                 }
                 else
                 {
-                    LogError($"StopRecordingToStreamingAssets did not save recording. Recording clip null: {_recordingClip == null}. Position: {position}. State: {GetRecordingStateForLog()}");
+                    LogError($"StopRecordingToStreamingAssets did not save recording. Recording clip null: {_recordingClip == null}. Position: {position}. Last recording position: {_lastRecordingPosition}. State: {GetRecordingStateForLog()}");
                 }
             }
             catch (Exception exception)
@@ -274,6 +277,7 @@ namespace Controllers
 
             _recordingClip = null;
             _isRecording = false;
+            _lastRecordingPosition = 0;
             EnableMicrophone();
 
             Log($"StopRecordingToStreamingAssets completed. Result path: '{localPath}'. State after: {GetRecordingStateForLog()}");
@@ -288,6 +292,53 @@ namespace Controllers
             for (int i = 0; i < samples.Length; i++)
             {
                 samples[i] = Mathf.Clamp(samples[i] * multiplier, -1f, 1f);
+            }
+        }
+
+        private int GetRecordingPositionForStop()
+        {
+            try
+            {
+                return Microphone.GetPosition(_micName);
+            }
+            catch (Exception exception)
+            {
+                LogError($"Failed to get microphone position before stopping. Last recording position: {_lastRecordingPosition}.", exception);
+                return 0;
+            }
+        }
+
+        private int GetActualRecordingPosition(int position)
+        {
+            if (position > 0)
+            {
+                _lastRecordingPosition = position;
+                return position;
+            }
+
+            if (_lastRecordingPosition > 0)
+            {
+                Log($"Using last known recording position because Microphone.GetPosition returned 0. Last recording position: {_lastRecordingPosition}.");
+                return _lastRecordingPosition;
+            }
+
+            return 0;
+        }
+
+        private void UpdateRecordingPosition()
+        {
+            if (!_isRecording || string.IsNullOrEmpty(_micName))
+                return;
+
+            try
+            {
+                var position = Microphone.GetPosition(_micName);
+                if (position > 0)
+                    _lastRecordingPosition = position;
+            }
+            catch (Exception exception)
+            {
+                LogError("Failed to update track recording position.", exception);
             }
         }
 
@@ -432,6 +483,11 @@ namespace Controllers
         {
             _lastMicrophonePosition = -1;
             _lastPositionChangedTime = Time.unscaledTime;
+        }
+
+        private void Update()
+        {
+            UpdateRecordingPosition();
         }
 
         private int GetSupportedFrequency(string micName)
