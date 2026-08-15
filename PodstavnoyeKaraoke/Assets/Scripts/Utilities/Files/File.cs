@@ -25,6 +25,22 @@ namespace Utilities.Files
             return PathCombine(Application.streamingAssetsPath, localPath);
         }
 
+        public static AudioClip ConvertToMonoAudioClip(AudioClip audioClip, string name)
+        {
+            AudioClip newAudioClip = AudioClip.Create(name, audioClip.samples, audioClip.channels, audioClip.frequency, false);
+            float[] copyData = new float[audioClip.samples * audioClip.channels];
+            audioClip.GetData(copyData, 0);
+
+            List<float> monoData = new List<float>();
+            for (int i = 0; i < copyData.Length; i+=2)
+            {
+                monoData.Add(copyData[i]);
+            }
+            newAudioClip.SetData(monoData.ToArray(), 0);
+
+            return newAudioClip;
+        }
+
         public static string GetNameFile(string path)
         {
             return Path.GetFileNameWithoutExtension(path);
@@ -346,14 +362,14 @@ namespace Utilities.Files
             return path;
         }
         
-        public static AudioClip LoadAudioClipFromStreamingAssets(string path)
+        public static AudioClip LoadAudioClipFromStreamingAssets(string path, bool stream = true)
         {
             string fullPath = PathCombine(GetPathToStreamingAssets(), path);
             
-            Debug.Log($"[FileUtility] LoadAudioClipFromStreamingAssets requested. Local path: '{path}'. Full path: '{fullPath}'. Exists: {System.IO.File.Exists(fullPath)}.");
+            Debug.Log($"[FileUtility] LoadAudioClipFromStreamingAssets requested. Local path: '{path}'. Full path: '{fullPath}'. Stream: {stream}. Exists: {System.IO.File.Exists(fullPath)}.");
             WWW www = new WWW("file://" + fullPath);
         
-            AudioClip clip = www.GetAudioClip(false, true, AudioType.WAV);
+            AudioClip clip = www.GetAudioClip(false, stream, AudioType.WAV);
 
             if (clip == null)
             {

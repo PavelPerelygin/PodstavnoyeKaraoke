@@ -22,6 +22,8 @@ namespace Game.PlayersPanel
             _playersPanel = playersPanel;
 
             InitButtons();
+
+            UpdatePlayerName();
             
             PlayerData.OnChangeName += OnChangeName;
         }

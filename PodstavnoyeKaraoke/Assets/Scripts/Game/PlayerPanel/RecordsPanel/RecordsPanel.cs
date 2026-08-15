@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Controllers;
 using Managers.Audio;
@@ -44,6 +45,7 @@ namespace Game.PlayerPanel.RecordsPanel
         public void AddRecord(RecordData recordData)
         {
             CreateRecordItem(recordData);
+            StartCoroutine(ScrollToBottomAfterLayout());
         }
 
         public void PlayRecord(RecordItem recordItem)
@@ -164,6 +166,15 @@ namespace Game.PlayerPanel.RecordsPanel
                 Destroy(_recordItems[i].gameObject);
 
             _recordItems.Clear();
+        }
+
+        private IEnumerator ScrollToBottomAfterLayout()
+        {
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+
+            if (_scrollRect != null)
+                _scrollRect.verticalNormalizedPosition = 0f;
         }
     }
 }

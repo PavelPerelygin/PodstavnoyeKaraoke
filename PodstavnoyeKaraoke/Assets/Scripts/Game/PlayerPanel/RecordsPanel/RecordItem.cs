@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Utilities;
 using Utilities.Files;
+using AudioWaveView = Game.AudioWave.AudioWave;
 
 namespace Game.PlayerPanel.RecordsPanel
 {
@@ -18,6 +19,7 @@ namespace Game.PlayerPanel.RecordsPanel
         [SerializeField] private Button _dowlandButton;
         [SerializeField] private Slider _slider;
         [SerializeField] private Text _playTimeText;
+        [SerializeField] private AudioWaveView _audioWave;
 
         private RecordsPanel _recordsPanel;
         private bool _isUpdatingSlider;
@@ -35,7 +37,20 @@ namespace Game.PlayerPanel.RecordsPanel
 
             InitButtons();
             InitSlider();
+            InitAudioWave();
             ResetProgress();
+        }
+
+        private void InitAudioWave()
+        {
+            if (_audioWave == null)
+                _audioWave = GetComponentInChildren<AudioWaveView>(true);
+
+            if (_audioWave == null || RecordData == null || !RecordData.IsExistRecord())
+                return;
+
+            _audioWave.SetProgressSlider(_slider);
+            _audioWave.SetAudioClip(RecordData.GetPatchToRecord());
         }
 
         private void InitButtons()
