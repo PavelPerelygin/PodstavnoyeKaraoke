@@ -93,9 +93,8 @@ namespace Controllers
                 }
 
                 num *= MainController.Instance.LocalSettings.GetSensitivityMicrophone();
-                num = Mathf.Clamp(num, 0f, 100f);
 
-                return num;
+                return Mathf.Clamp01(num);
             }
             catch (Exception exception)
             {

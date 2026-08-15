@@ -12,23 +12,96 @@ namespace Game.SettingsPanel
 {
     public class SettingsPanel : Interactable
     {
+        private const float VolumeLevelSmoothSpeed = 12f;
+
+        private static readonly Color VolumeLevelMinColor = new Color(0.1f, 0.85f, 0.2f);
+        private static readonly Color VolumeLevelMaxColor = new Color(1f, 0.1f, 0.05f);
+
         [SerializeField] private Button _changeScreenModeButton;
         [SerializeField] private Toggle _autoRecordToggle;
+        [SerializeField] private Image _volumeLevel;
         [SerializeField] private Dropdown _microphoneNameDropdown;
         [SerializeField] private Slider _sensitivityMicrophoneSlider;
         [SerializeField] private Slider _trackVolumeSlider;
         [SerializeField] private Slider _recordVolumeSlider;
 
         private MainBoard _mainBoard;
+        private RectTransform _volumeLevelRectTransform;
+        private Vector2 _volumeLevelInitialAnchoredPosition;
+        private float _volumeLevelMaxWidth;
+        private float _displayedVolumeLevel;
         
         public void Init(MainBoard mainBoard)
         {
             _mainBoard = mainBoard;
 
+            InitVolumeLevel();
             InitButton();
             InitToggle();
             InitSlider();
             InitDropdown();
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+            UpdateVolumeLevel();
+        }
+
+        private void InitVolumeLevel()
+        {
+            if (_volumeLevel == null)
+                return;
+
+            _volumeLevelRectTransform = _volumeLevel.rectTransform;
+            _volumeLevelInitialAnchoredPosition = _volumeLevelRectTransform.anchoredPosition;
+            _volumeLevelMaxWidth = 181;
+            SetVolumeLevel(0f, true);
+        }
+
+        private void UpdateVolumeLevel()
+        {
+            if (_volumeLevel == null)
+                return;
+
+            if (_volumeLevelRectTransform == null || _volumeLevelMaxWidth <= 0f)
+                InitVolumeLevel();
+
+            if (MainController.Instance == null || MainController.Instance.MicrophoneController == null)
+            {
+                SetVolumeLevel(0f, false);
+                return;
+            }
+
+            SetVolumeLevel(MainController.Instance.MicrophoneController.GetMicrophoneVolume(), false);
+        }
+
+        private void SetVolumeLevel(float normalizedVolume, bool instant)
+        {
+            normalizedVolume = Mathf.Clamp01(normalizedVolume);
+            _displayedVolumeLevel = instant
+                ? normalizedVolume
+                : Mathf.Lerp(_displayedVolumeLevel, normalizedVolume, Mathf.Clamp01(Time.unscaledDeltaTime * VolumeLevelSmoothSpeed));
+
+            SetVolumeLevelWidth(_volumeLevelMaxWidth * _displayedVolumeLevel);
+            _volumeLevel.color = GetVolumeLevelColor(_displayedVolumeLevel);
+        }
+
+        private void SetVolumeLevelWidth(float width)
+        {
+            if (_volumeLevelRectTransform == null)
+                return;
+
+            var anchoredPosition = _volumeLevelInitialAnchoredPosition;
+            anchoredPosition.x += _volumeLevelRectTransform.pivot.x * (width - _volumeLevelMaxWidth);
+
+            _volumeLevelRectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+            _volumeLevelRectTransform.anchoredPosition = anchoredPosition;
+        }
+
+        private Color GetVolumeLevelColor(float normalizedVolume)
+        {
+            return Color.Lerp(VolumeLevelMinColor, VolumeLevelMaxColor, normalizedVolume);
         }
 
         private void InitButton()
