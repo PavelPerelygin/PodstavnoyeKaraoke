@@ -209,13 +209,13 @@ namespace Utilities.Files
                 return new ExtensionFilter();
         }
 
-        public static void SaveFile(TypeContent typeContent, string header,string localPath, Action<string> onSave = null, Action onNotSave = null)
+        public static void SaveFile(TypeContent typeContent, string header,string localPath, string defaultFileNameWithoutExtension = "", Action<string> onSave = null, Action onNotSave = null)
         {
             var extensions = new[] {
                 GetExtensionFilterByTypeContent(typeContent),
             };
 
-            var name = Path.GetFileName(localPath);
+            var name = GetDefaultSaveFileName(localPath, defaultFileNameWithoutExtension);
             
             var path = StandaloneFileBrowser.SaveFilePanel(header, "", name, extensions);
             if (!string.IsNullOrEmpty(path))
@@ -237,6 +237,18 @@ namespace Utilities.Files
             }
         }
 
+        private static string GetDefaultSaveFileName(string localPath, string defaultFileNameWithoutExtension)
+        {
+            if (string.IsNullOrEmpty(defaultFileNameWithoutExtension))
+                return Path.GetFileName(localPath);
+
+            var fileName = SanitizeFileName(defaultFileNameWithoutExtension);
+            if (string.IsNullOrEmpty(fileName))
+                return Path.GetFileName(localPath);
+
+            return fileName + Path.GetExtension(localPath);
+        }
+
         public static string SaveBytesToStreamingAssets(byte[] bytes,string extension, string where = "Content")
         {
             CreateDirectoryIfNeed(PathCombine(GetPathToStreamingAssets(),where));
@@ -251,6 +263,17 @@ namespace Utilities.Files
             Debug.Log($"[FileUtility] SaveBytesToStreamingAssets completed. Local path: '{localPath}'. Full path: '{path}'.");
             
             return localPath;
+        }
+
+        private static string SanitizeFileName(string fileName)
+        {
+            var invalidChars = Path.GetInvalidFileNameChars();
+            for (int i = 0; i < invalidChars.Length; i++)
+            {
+                fileName = fileName.Replace(invalidChars[i], '_');
+            }
+
+            return fileName.Trim();
         }
         
         public static string CopyFileToStreamingAssets(string from, string where = "Content")

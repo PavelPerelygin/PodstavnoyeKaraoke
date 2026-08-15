@@ -96,7 +96,7 @@ namespace Game.PlayerPanel.RecordsPanel
             if (RecordData == null || !RecordData.IsExistRecord())
                 return;
 
-            File.SaveFile(TypeContent.Sound, MainController.Instance.TextManager.GetText(538), RecordData.GetPatchToRecord());
+            File.SaveFile(TypeContent.Sound, MainController.Instance.TextManager.GetText(538), RecordData.GetPatchToRecord(), _recordsPanel.GetRecordSaveFileName(RecordData));
         }
 
         private void SetSliderValue(float value)

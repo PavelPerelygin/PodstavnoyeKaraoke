@@ -332,16 +332,41 @@ namespace Game.PlayerPanel
 
         private string GetUniqueRecordName(string baseName)
         {
-            var result = baseName;
             var index = 1;
+            var result = $"{baseName} ({index})";
 
             while (CheckRecordNameExists(result))
             {
-                result = $"{baseName} ({index})";
                 index++;
+                result = $"{baseName} ({index})";
             }
 
             return result;
+        }
+
+        public string GetRecordSaveFileName(RecordData recordData)
+        {
+            if (_playerData == null || recordData == null)
+                return "";
+
+            var playerName = _playerData.GetNamePlayer();
+            var recordName = GetRecordNameWithIndex(recordData.GetRecordName());
+
+            if (recordName.StartsWith($"{playerName} - "))
+                return recordName;
+
+            return $"{playerName} - {recordName}";
+        }
+
+        private string GetRecordNameWithIndex(string recordName)
+        {
+            if (string.IsNullOrEmpty(recordName))
+                return "(1)";
+
+            if (recordName.EndsWith(")"))
+                return recordName;
+
+            return $"{recordName} (1)";
         }
 
         private bool CheckRecordNameExists(string recordName)

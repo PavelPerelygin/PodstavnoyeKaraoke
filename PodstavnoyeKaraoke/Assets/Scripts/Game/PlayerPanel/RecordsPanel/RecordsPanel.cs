@@ -96,6 +96,11 @@ namespace Game.PlayerPanel.RecordsPanel
             Destroy(recordItem.gameObject);
         }
 
+        public string GetRecordSaveFileName(RecordData recordData)
+        {
+            return _playerPanel == null ? "" : _playerPanel.GetRecordSaveFileName(recordData);
+        }
+
         public void SetRecordProgress(RecordItem recordItem, float value)
         {
             if (_playingRecordItem != recordItem || _playingRecordAudioInfo == null)
