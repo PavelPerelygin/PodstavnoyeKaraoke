@@ -24,6 +24,8 @@ namespace Game.SettingsPanel
         [SerializeField] private Slider _sensitivityMicrophoneSlider;
         [SerializeField] private Slider _trackVolumeSlider;
         [SerializeField] private Slider _recordVolumeSlider;
+        [SerializeField] private InputField _widthWindow;
+        [SerializeField] private InputField _heigthWindow;
 
         private MainBoard _mainBoard;
         private RectTransform _volumeLevelRectTransform;
@@ -36,10 +38,63 @@ namespace Game.SettingsPanel
             _mainBoard = mainBoard;
 
             InitVolumeLevel();
+            InitInputFields();
             InitButton();
             InitToggle();
             InitSlider();
             InitDropdown();
+        }
+
+        private void InitInputFields()
+        {
+            if (_widthWindow != null)
+            {
+                _widthWindow.contentType = InputField.ContentType.IntegerNumber;
+                _widthWindow.text = Screen.width.ToString();
+                _widthWindow.onEndEdit.AddListener(SetWindowSizeByWidth);
+                _widthWindow.DisableOverDownColors();
+            }
+
+            if (_heigthWindow != null)
+            {
+                _heigthWindow.contentType = InputField.ContentType.IntegerNumber;
+                _heigthWindow.text = Screen.height.ToString();
+                _heigthWindow.onEndEdit.AddListener(SetWindowSizeByHeight);
+                _heigthWindow.DisableOverDownColors();
+            }
+        }
+
+        private void SetWindowSizeByWidth(string value)
+        {
+            if (!int.TryParse(value, out var width))
+            {
+                UpdateWindowSizeInputFields(Screen.width, Screen.height);
+                return;
+            }
+
+            var windowSize = MainController.Instance.ScreensController.SetWindowSizeByWidth(width);
+            UpdateWindowSizeInputFields(windowSize.x, windowSize.y);
+        }
+
+        private void SetWindowSizeByHeight(string value)
+        {
+            if (!int.TryParse(value, out var height))
+            {
+                UpdateWindowSizeInputFields(Screen.width, Screen.height);
+                return;
+            }
+
+            var windowSize = MainController.Instance.ScreensController.SetWindowSizeByHeight(height);
+            UpdateWindowSizeInputFields(windowSize.x, windowSize.y);
+        }
+
+        private void UpdateWindowSizeInputFields(int width, int height)
+        {
+            if (_widthWindow != null)
+                _widthWindow.text = width.ToString();
+
+            if (_heigthWindow != null)
+                _heigthWindow.text = height.ToString();
         }
 
         protected override void Update()

@@ -70,6 +70,7 @@ namespace Controllers
             RemoteSettings = new RemoteSettings();
             HelperController = new HelperController();
             ScreensController = new ScreensController();
+            ScreensController.Init();
             MicrophoneController.Init();
 
             CheckNeedRunInBackground();

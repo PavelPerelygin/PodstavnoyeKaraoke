@@ -10,6 +10,15 @@ namespace Controllers
 {
     public class ScreensController
     {
+        private const int MinWindowWidth = 640;
+        private const int MinWindowHeight = 360;
+        private const int MaxWindowWidth = 7680;
+        private const int MaxWindowHeight = 4320;
+        private const int DefaultWindowWidth = 1920;
+        private const int DefaultWindowHeight = 1080;
+        private const int AspectWidth = 16;
+        private const int AspectHeight = 9;
+
 #if UNITY_STANDALONE_WIN && !UNITY_EDITOR
         [DllImport("user32.dll")]
         private static extern bool ShowWindow(uint hwnd, int nCmdShow);
@@ -24,6 +33,14 @@ namespace Controllers
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern bool EnumWindows(EnumWindowsProc callback, IntPtr extraData);
 #endif
+
+        public void Init()
+        {
+            if (IsAspectRatioValid(Screen.width, Screen.height))
+                return;
+
+            SetWindowSize(DefaultWindowWidth, DefaultWindowHeight);
+        }
 
         public void MinimizeSelectedScreen()
         {
@@ -82,6 +99,36 @@ namespace Controllers
             return false;  
 #endif
             return Screen.fullScreen;
+        }
+
+        public Vector2Int SetWindowSizeByWidth(int width)
+        {
+            width = Mathf.Clamp(width, MinWindowWidth, MaxWindowWidth);
+            var height = Mathf.RoundToInt(width * AspectHeight / (float)AspectWidth);
+
+            return SetWindowSize(width, height);
+        }
+
+        public Vector2Int SetWindowSizeByHeight(int height)
+        {
+            height = Mathf.Clamp(height, MinWindowHeight, MaxWindowHeight);
+            var width = Mathf.RoundToInt(height * AspectWidth / (float)AspectHeight);
+
+            return SetWindowSize(width, height);
+        }
+
+        private Vector2Int SetWindowSize(int width, int height)
+        {
+            width = Mathf.Clamp(width, MinWindowWidth, MaxWindowWidth);
+            height = Mathf.Clamp(height, MinWindowHeight, MaxWindowHeight);
+
+            Screen.SetResolution(width, height, FullScreenMode.Windowed);
+            return new Vector2Int(width, height);
+        }
+
+        private bool IsAspectRatioValid(int width, int height)
+        {
+            return width * AspectHeight == height * AspectWidth;
         }
         
     }
