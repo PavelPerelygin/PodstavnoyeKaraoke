@@ -56,25 +56,28 @@ namespace Controllers
                 if (string.IsNullOrEmpty(_micName))
                     return 0f;
 
-                if (_isRecording)
-                    return 0f;
-
                 if (!Microphone.IsRecording(_micName))
                 {
-                    TryRestartMicrophone("Microphone recording stopped unexpectedly while reading volume.");
+                    if (!_isRecording)
+                        TryRestartMicrophone("Microphone recording stopped unexpectedly while reading volume.");
                     return 0f;
                 }
 
-                if (_recordedClip == null)
+                var clip = _isRecording ? _recordingClip : _recordedClip;
+                if (clip == null)
                 {
-                    TryRestartMicrophone("Recorded clip is null while reading volume.");
+                    if (!_isRecording)
+                        TryRestartMicrophone("Recorded clip is null while reading volume.");
                     return 0f;
                 }
 
                 float num = 0f;
-                float[] array = new float[_sampleWindow];
+                float[] array = new float[_sampleWindow * clip.channels];
                 int position = Microphone.GetPosition(_micName);
-                CheckMicrophonePositionStuck(position);
+                if (_isRecording)
+                    _lastRecordingPosition = Mathf.Max(_lastRecordingPosition, position);
+                else
+                    CheckMicrophonePositionStuck(position);
 
                 int num2 = position - (_sampleWindow + 1);
                 if (num2 < 0)
@@ -82,8 +85,8 @@ namespace Controllers
                     return 0f;
                 }
 
-                _recordedClip.GetData(array, num2);
-                for (int i = 0; i < _sampleWindow; i++)
+                clip.GetData(array, num2);
+                for (int i = 0; i < array.Length; i++)
                 {
                     float num3 = Mathf.Abs(array[i]);
                     if (num < num3)
