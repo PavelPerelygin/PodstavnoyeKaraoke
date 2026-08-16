@@ -61,6 +61,8 @@ namespace Game.TracksPanel
             {
                 CreateTrackItem(tracksData[i]);
             }
+            
+            SortTrackItems();
         }
         
         private void CreateTrackItem(TrackData trackData)
@@ -69,6 +71,20 @@ namespace Game.TracksPanel
             item.Init(trackData, this);
             
             _trackItems.Add(item);
+        }
+
+        public void SortTrackItems()
+        {
+            _trackItems.Sort((firstItem, secondItem) =>
+                string.Compare(
+                    firstItem.TrackData.GetNameTrack(),
+                    secondItem.TrackData.GetNameTrack(),
+                    StringComparison.CurrentCultureIgnoreCase));
+
+            for (int i = 0; i < _trackItems.Count; i++)
+            {
+                _trackItems[i].transform.SetSiblingIndex(i);
+            }
         }
 
         public void OnClickTrackItem(TrackItem trackItem)
@@ -104,6 +120,7 @@ namespace Game.TracksPanel
                     return;
                 
                 CreateTrackItem(trackData);
+                SortTrackItems();
             });
         }
         

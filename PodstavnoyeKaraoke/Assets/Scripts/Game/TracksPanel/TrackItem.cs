@@ -72,6 +72,7 @@ namespace Game.TracksPanel
         private void OnChangeName()
         {
             UpdateName();
+            _tracksPanel.SortTrackItems();
         }
 
         private void OnDestroy()
