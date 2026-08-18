@@ -24,6 +24,8 @@ namespace Game.Common
         
         public static string Decrypter(string value, string encryptionKey)
         {
+            value = NormalizeBase64(value);
+
             SHA256 mySHA256 = SHA256Managed.Create();
             byte[] key = mySHA256.ComputeHash(Encoding.UTF8.GetBytes(encryptionKey));
 
@@ -69,6 +71,49 @@ namespace Game.Common
             }
 
             return plainText;
+        }
+
+        private static string NormalizeBase64(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return "";
+
+            var normalized = new StringBuilder(value.Length);
+            bool paddingStarted = false;
+
+            foreach (var c in value)
+            {
+                if (char.IsWhiteSpace(c))
+                    continue;
+
+                if (paddingStarted)
+                {
+                    if (c == '=')
+                        normalized.Append(c);
+                    else
+                        break;
+
+                    continue;
+                }
+
+                if (c == '=')
+                {
+                    paddingStarted = true;
+                    normalized.Append(c);
+                    continue;
+                }
+
+                if ((c >= 'A' && c <= 'Z') ||
+                    (c >= 'a' && c <= 'z') ||
+                    (c >= '0' && c <= '9') ||
+                    c == '+' ||
+                    c == '/')
+                {
+                    normalized.Append(c);
+                }
+            }
+
+            return normalized.ToString();
         }
         
         public static string Encryptier(string value, string decryptionKey)
