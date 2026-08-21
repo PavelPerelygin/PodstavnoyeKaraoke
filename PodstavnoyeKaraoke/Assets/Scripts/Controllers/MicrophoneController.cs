@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Dialogs;
 using Dialogs.Base;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace Controllers
         private const int MaxErrorLogLines = 2000;
         private const float RestartMicrophoneDelay = 3f;
         private const float StuckPositionDelay = 2f;
+        private const float MonitoringDiagnosticsInterval = 3f;
         private const int DefaultFrequency = 44100;
         private const int FallbackFrequency = 48000;
         private const int MaxRecordingLengthSeconds = 3599;
@@ -22,6 +24,7 @@ namespace Controllers
         private AudioClip _recordingClip;
         private int _sampleWindow = 128;
         private float _nextRestartMicrophoneTime;
+        private float _nextMonitoringDiagnosticsTime;
         private float _lastPositionChangedTime;
         private int _lastMicrophonePosition = -1;
         private int _lastRecordingPosition;
@@ -71,7 +74,7 @@ namespace Controllers
                     return 0f;
                 }
 
-                float num = 0f;
+                float rawPeak = 0f;
                 float[] array = new float[_sampleWindow * clip.channels];
                 int position = Microphone.GetPosition(_micName);
                 if (_isRecording)
@@ -82,6 +85,7 @@ namespace Controllers
                 int num2 = position - (_sampleWindow + 1);
                 if (num2 < 0)
                 {
+                    LogMonitoringSampleStatsIfNeeded(position, clip, 0f, MainController.Instance.LocalSettings.GetSensitivityMicrophone(), 0f, "waiting for enough samples");
                     return 0f;
                 }
 
@@ -89,13 +93,16 @@ namespace Controllers
                 for (int i = 0; i < array.Length; i++)
                 {
                     float num3 = Mathf.Abs(array[i]);
-                    if (num < num3)
+                    if (rawPeak < num3)
                     {
-                        num = num3;
+                        rawPeak = num3;
                     }
                 }
 
-                num *= MainController.Instance.LocalSettings.GetSensitivityMicrophone();
+                var sensitivity = MainController.Instance.LocalSettings.GetSensitivityMicrophone();
+                var num = rawPeak * sensitivity;
+
+                LogMonitoringSampleStatsIfNeeded(position, clip, rawPeak, sensitivity, num, "samples read");
 
                 return Mathf.Clamp01(num);
             }
@@ -210,8 +217,8 @@ namespace Controllers
 
             try
             {
-                var frequency = GetSupportedFrequency(_micName);
-                _recordingClip = Microphone.Start(_micName, false, MaxRecordingLengthSeconds, frequency);
+                var frequency = 0;
+                _recordingClip = TryStartMicrophoneClip(_micName, false, MaxRecordingLengthSeconds, out frequency);
                 _isRecording = _recordingClip != null;
                 _lastRecordingPosition = 0;
 
@@ -257,7 +264,9 @@ namespace Controllers
                     var samples = new float[actualPosition * _recordingClip.channels];
                     Log($"StopRecordingToStreamingAssets reading samples. Position: {actualPosition}. Last raw position: {position}. Channels: {_recordingClip.channels}. Samples array length: {samples.Length}.");
                     _recordingClip.GetData(samples, 0);
+                    Log($"StopRecordingToStreamingAssets raw sample stats: {GetSampleStatsForLog(samples)}.");
                     ApplySensitivityToSamples(samples);
+                    Log($"StopRecordingToStreamingAssets samples after sensitivity: {GetSampleStatsForLog(samples)}.");
 
                     var clip = AudioClip.Create("Record", actualPosition, _recordingClip.channels, _recordingClip.frequency, false);
                     clip.SetData(samples, 0);
@@ -265,7 +274,7 @@ namespace Controllers
                     string unusedPath;
                     var bytes = WavUtility.FromAudioClip(clip, out unusedPath, false);
                     localPath = FileUtility.SaveBytesToStreamingAssets(bytes, ".wav");
-                    Log($"StopRecordingToStreamingAssets saved recording. Bytes: {bytes.Length}. Local path: '{localPath}'.");
+                    Log($"StopRecordingToStreamingAssets saved recording. Bytes: {bytes.Length}. Expected wav data bytes: {samples.Length * 2}. Local path: '{localPath}'.");
                 }
                 else
                 {
@@ -377,8 +386,8 @@ namespace Controllers
 
             try
             {
-                var frequency = GetSupportedFrequency(_micName);
-                _recordedClip = Microphone.Start(_micName, true, 1, frequency);
+                var frequency = 0;
+                _recordedClip = TryStartMicrophoneClip(_micName, true, 1, out frequency);
                 ResetPositionState();
 
                 if (_recordedClip == null)
@@ -485,6 +494,7 @@ namespace Controllers
         {
             _lastMicrophonePosition = -1;
             _lastPositionChangedTime = Time.unscaledTime;
+            _nextMonitoringDiagnosticsTime = 0f;
         }
 
         private void Update()
@@ -523,10 +533,102 @@ namespace Controllers
             return frequency >= minFrequency && frequency <= maxFrequency;
         }
 
+        private void LogMonitoringSampleStatsIfNeeded(int position, AudioClip clip, float rawPeak, float sensitivity, float scaledPeak, string reason)
+        {
+            if (_isRecording || Time.unscaledTime < _nextMonitoringDiagnosticsTime)
+                return;
+
+            _nextMonitoringDiagnosticsTime = Time.unscaledTime + MonitoringDiagnosticsInterval;
+            Log($"Monitoring sample stats ({reason}). Position: {position}. RawPeak: {rawPeak:0.000000}. Sensitivity: {sensitivity:0.000}. ScaledPeak: {scaledPeak:0.000000}. Clip: {GetClipInfoForLog(clip)}.");
+        }
+
+        private AudioClip TryStartMicrophoneClip(string micName, bool loop, int lengthSec, out int frequency)
+        {
+            frequency = 0;
+            var frequencies = GetCandidateFrequencies(micName);
+            Log($"Trying to start microphone '{micName}'. Loop: {loop}. LengthSec: {lengthSec}. Device caps: {GetDeviceCapsForLog(micName)}. Candidate frequencies: {string.Join(", ", frequencies)}. AudioSettings.outputSampleRate: {AudioSettings.outputSampleRate}.");
+
+            for (int i = 0; i < frequencies.Count; i++)
+            {
+                var candidateFrequency = frequencies[i];
+
+                try
+                {
+                    var clip = Microphone.Start(micName, loop, lengthSec, candidateFrequency);
+                    var isRecording = GetIsRecordingForLog(micName);
+
+                    if (clip != null && Microphone.IsRecording(micName))
+                    {
+                        frequency = candidateFrequency;
+                        Log($"Microphone.Start succeeded. Frequency: {candidateFrequency}. IsRecording: {isRecording}. Clip: {GetClipInfoForLog(clip)}.");
+                        return clip;
+                    }
+
+                    LogError($"Microphone.Start did not produce an active clip. Frequency: {candidateFrequency}. Clip: {GetClipInfoForLog(clip)}. IsRecording: {isRecording}.");
+
+                    if (clip != null || Microphone.IsRecording(micName))
+                        Microphone.End(micName);
+                }
+                catch (Exception exception)
+                {
+                    LogError($"Microphone.Start failed. Frequency: {candidateFrequency}.", exception);
+                }
+            }
+
+            LogError($"All Microphone.Start attempts failed for '{micName}'. Candidate frequencies: {string.Join(", ", frequencies)}.");
+            return null;
+        }
+
+        private List<int> GetCandidateFrequencies(string micName)
+        {
+            var frequencies = new List<int>();
+
+            try
+            {
+                Microphone.GetDeviceCaps(micName, out var minFrequency, out var maxFrequency);
+
+                if (minFrequency == 0 && maxFrequency == 0)
+                {
+                    AddUniqueFrequency(frequencies, FallbackFrequency);
+                    AddUniqueFrequency(frequencies, AudioSettings.outputSampleRate);
+                    AddUniqueFrequency(frequencies, DefaultFrequency);
+                    return frequencies;
+                }
+
+                AddSupportedFrequency(frequencies, FallbackFrequency, minFrequency, maxFrequency);
+                AddSupportedFrequency(frequencies, AudioSettings.outputSampleRate, minFrequency, maxFrequency);
+                AddSupportedFrequency(frequencies, DefaultFrequency, minFrequency, maxFrequency);
+                AddSupportedFrequency(frequencies, maxFrequency, minFrequency, maxFrequency);
+                AddSupportedFrequency(frequencies, minFrequency, minFrequency, maxFrequency);
+            }
+            catch (Exception exception)
+            {
+                LogError("Failed to get microphone device caps while building frequency candidates.", exception);
+            }
+
+            AddUniqueFrequency(frequencies, DefaultFrequency);
+
+            return frequencies;
+        }
+
+        private void AddSupportedFrequency(List<int> frequencies, int frequency, int minFrequency, int maxFrequency)
+        {
+            if (IsFrequencySupported(frequency, minFrequency, maxFrequency))
+                AddUniqueFrequency(frequencies, frequency);
+        }
+
+        private void AddUniqueFrequency(List<int> frequencies, int frequency)
+        {
+            if (frequency <= 0 || frequencies.Contains(frequency))
+                return;
+
+            frequencies.Add(frequency);
+        }
+
         private string GetRecordingStateForLog()
         {
             return $"mic='{_micName}', trackRecordingFlag={_isRecording}, selected='{MainController.Instance.LocalSettings.GetMicrophoneName()}', " +
-                   $"isRecording={GetIsRecordingForLog(_micName)}, recordingClip={GetClipInfoForLog(_recordingClip)}, monitoringClip={GetClipInfoForLog(_recordedClip)}";
+                   $"position={GetMicrophonePositionForLog(_micName)}, isRecording={GetIsRecordingForLog(_micName)}, recordingClip={GetClipInfoForLog(_recordingClip)}, monitoringClip={GetClipInfoForLog(_recordedClip)}";
         }
 
         private string GetClipInfoForLog(AudioClip clip)
@@ -582,7 +684,15 @@ namespace Controllers
         {
             try
             {
-                return string.Join(", ", Microphone.devices);
+                var devices = Microphone.devices;
+                if (devices == null || devices.Length == 0)
+                    return "none";
+
+                var result = new string[devices.Length];
+                for (int i = 0; i < devices.Length; i++)
+                    result[i] = $"'{devices[i]}' ({GetDeviceCapsForLog(devices[i])})";
+
+                return string.Join(", ", result);
             }
             catch (Exception exception)
             {
@@ -619,6 +729,45 @@ namespace Controllers
             {
                 return $"Failed to get recording state: {exception}";
             }
+        }
+
+        private string GetMicrophonePositionForLog(string micName)
+        {
+            if (string.IsNullOrEmpty(micName))
+                return "0";
+
+            try
+            {
+                return Microphone.GetPosition(micName).ToString();
+            }
+            catch (Exception exception)
+            {
+                return $"Failed to get position: {exception.Message}";
+            }
+        }
+
+        private string GetSampleStatsForLog(float[] samples)
+        {
+            if (samples == null || samples.Length == 0)
+                return "empty";
+
+            var peak = 0f;
+            var sum = 0f;
+            var nonZeroSamples = 0;
+
+            for (int i = 0; i < samples.Length; i++)
+            {
+                var abs = Mathf.Abs(samples[i]);
+                if (abs > peak)
+                    peak = abs;
+
+                sum += abs;
+
+                if (abs > 0.0001f)
+                    nonZeroSamples++;
+            }
+
+            return $"peak={peak:0.000000}, average={sum / samples.Length:0.000000}, nonZero={nonZeroSamples}/{samples.Length}";
         }
 
         #endregion
